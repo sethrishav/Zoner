@@ -57,7 +57,7 @@ All configuration comes from environment variables. See [.env.example](.env.exam
 | Variable | Purpose | Default (dev only) |
 |---|---|---|
 | `SPRING_PROFILES_ACTIVE` | `dev` or `prod` | `dev` |
-| `DB_URL` | JDBC URL | `jdbc:postgresql://localhost:5432/zoner` |
+| `DB_URL` | JDBC URL | `jdbc:postgresql://localhost:5433/zoner` |
 | `DB_USER` / `DB_PASSWORD` | Database credentials | local compose values |
 | `DB_POOL_SIZE` | Connection pool size | `5` |
 | `PORT` | HTTP port | `8080` |

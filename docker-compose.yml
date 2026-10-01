@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-zoner}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-zoner}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - zoner-pgdata:/var/lib/postgresql/data
     healthcheck:
