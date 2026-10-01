@@ -1,0 +1,10 @@
+# Local development defaults. These match docker-compose.yml and are NOT secrets.
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/zoner}
+    username: ${DB_USER:zoner}
+    password: ${DB_PASSWORD:zoner}
+
+logging:
+  level:
+    com.zoner: DEBUG
