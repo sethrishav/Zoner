@@ -201,6 +201,62 @@ export default function CalendarView({
     }
   };
 
+  // Custom event renderer with smart inline layout for short (10-25m) and standard events
+  const renderEventContent = (eventInfo) => {
+    const { event, timeText, view } = eventInfo;
+    const isMonth = view.type === 'dayGridMonth';
+    const isAllDay = event.allDay;
+    const hasRecurrence = Boolean(event.extendedProps?.recurrenceRule);
+
+    if (isMonth || isAllDay) {
+      return (
+        <div className="flex items-center gap-1.5 px-1.5 py-0.5 w-full overflow-hidden text-[11px] leading-tight text-white">
+          {!isAllDay && timeText && (
+            <span className="font-semibold text-[10px] opacity-80 shrink-0">{timeText}</span>
+          )}
+          <span className="font-medium truncate">{event.title}</span>
+          {hasRecurrence && <span className="opacity-75 shrink-0 text-[10px]">↻</span>}
+        </div>
+      );
+    }
+
+    const start = event.start;
+    const end = event.end || start;
+    const durationMinutes = start && end ? Math.round((end.getTime() - start.getTime()) / 60000) : 30;
+    const isShort = durationMinutes <= 25;
+
+    if (isShort) {
+      // Single-line compact horizontal badge for short events (10 min, 15 min, 20 min)
+      return (
+        <div className="flex items-center gap-1.5 px-2 py-0.5 w-full h-full overflow-hidden leading-none select-none text-white">
+          {timeText && (
+            <span className="font-bold text-[10px] opacity-90 shrink-0 tracking-tight">
+              {timeText}
+            </span>
+          )}
+          <span className="font-semibold text-[11px] truncate flex-1">{event.title}</span>
+          {hasRecurrence && <span className="opacity-80 shrink-0 text-[10px]">↻</span>}
+        </div>
+      );
+    }
+
+    // Standard multi-line layout for 30+ minute events
+    return (
+      <div className="flex flex-col justify-start p-1.5 w-full h-full overflow-hidden select-none leading-tight text-white">
+        <div className="flex items-center justify-between gap-1 mb-0.5">
+          <span className="font-bold text-[10px] opacity-90 tracking-tight">{timeText}</span>
+          {hasRecurrence && <span className="opacity-80 text-[10px]">↻</span>}
+        </div>
+        <div className="font-semibold text-[11px] truncate">{event.title}</div>
+        {event.extendedProps?.location && durationMinutes >= 45 && (
+          <div className="text-[10px] opacity-80 truncate mt-0.5">
+            📍 {event.extendedProps.location}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="h-full flex flex-col">
       {/* Calendar Top Toolbar */}
@@ -289,6 +345,9 @@ export default function CalendarView({
           eventDurationEditable={true}
           selectMirror={true}
           dayMaxEvents={3}
+          eventMinHeight={26}
+          eventShortHeight={30}
+          eventContent={renderEventContent}
           events={fcEvents}
           datesSet={handleDatesSet}
           select={handleSelect}
