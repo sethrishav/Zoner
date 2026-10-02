@@ -1,85 +1,399 @@
 # Zoner
 
-> A calendar that never loses track of time zones. _(Working tagline. Final product copy is decided in M6.)_
+> **A time-zone intelligent calendar platform with recurrence, multi-calendar sharing, real-time conflict detection, and an embedded Model Context Protocol (MCP) server for AI assistants.**
 
-Zoner is a calendar platform with Month/Week/Day views, recurring events, shared calendars, reminders and an
-MCP server so AI assistants can read and manage your calendar.
+[![Java 21](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.org/projects/jdk/21/)
+[![Spring Boot 3.5](https://img.shields.io/badge/Spring%20Boot-3.5-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![React 18](https://img.shields.io/badge/React-18-blue.svg)](https://react.dev/)
+[![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL-16-blue.svg)](https://www.postgresql.org/)
+[![Flyway](https://img.shields.io/badge/Flyway-Migrations-red.svg)](https://flywaydb.org/)
+[![MCP 2024-11-05](https://img.shields.io/badge/MCP-2024--11--05-purple.svg)](https://modelcontextprotocol.io/)
+[![Deployment Render](https://img.shields.io/badge/Deploy-Render-black.svg)](https://render.com/)
 
-**Status:** M0 (foundations). See [docs/PLAN.md](docs/PLAN.md) for the roadmap and
-[docs/adr/](docs/adr/) for design decisions.
+---
 
-## Repository layout
+## 1. Live Production Deployment & Reviewer Quick-Start
+
+Zoner is fully deployed and accessible live on the internet at **₹0 / $0 monthly hosting cost**:
+
+| Service | Live URL | Description |
+|---|---|---|
+| **Web Application** | [https://zoner-6uv2.onrender.com](https://zoner-6uv2.onrender.com) | Responsive React 18 SPA hosted on Render Static Site |
+| **API Backend** | [https://zoner-backend.onrender.com](https://zoner-backend.onrender.com) | Containerized Spring Boot 3.5 Web Service on Java 21 |
+| **Interactive Swagger UI** | [https://zoner-backend.onrender.com/swagger-ui.html](https://zoner-backend.onrender.com/swagger-ui.html) | OpenAPI 3.0 interactive endpoint explorer |
+| **Health Check & Probes** | [https://zoner-backend.onrender.com/healthz](https://zoner-backend.onrender.com/healthz) | Liveness and database connectivity probe |
+| **MCP Server Endpoint** | [https://zoner-backend.onrender.com/api/mcp](https://zoner-backend.onrender.com/api/mcp) | Streamable HTTP & SSE transport for Cursor / Claude |
+
+### Pre-Seeded Reviewer Credentials
+The cloud database is pre-seeded with sample calendars, events, and sharing rules:
+
+* **Primary Demo Account (Reviewer):**
+  * **Email:** `demo@zoner.app`
+  * **Password:** `Password123!`
+  * *(Tip: Click the **"Demo Reviewer"** button on the login screen to auto-fill credentials instantly)*
+* **Collaborator Account:**
+  * **Email:** `colleague@zoner.app`
+  * **Password:** `Password123!`
+  * *(Owns shared calendars "Project Alpha" and "Company Announcements")*
+
+> [!NOTE]
+> **Free-Tier Cold Start:** Render free-tier services spin down after 15 minutes of inactivity. If the service is waking up, the initial page load may take 30–50 seconds. Once awake, all interactions and API responses are immediate.
+
+---
+
+## 2. Architecture & System Topology
+
+Zoner is engineered as an API-first platform where human users (via the React web UI) and AI agents (via the Model Context Protocol) interact with the exact same domain services, transaction boundaries, and access control policies:
+
+```mermaid
+flowchart TD
+    subgraph Clients["Clients & Agents"]
+        Web["React 18 SPA (Vite + Tailwind)<br>zoner-6uv2.onrender.com"]
+        AI["AI Assistants (Cursor / Claude Desktop / Claude Code)"]
+    end
+
+    subgraph Backend["Spring Boot 3.5 Application (Java 21)<br>zoner-backend.onrender.com"]
+        subgraph Ingress["Ingress & Authentication"]
+            Cors["CORS Filter (*.onrender.com)"]
+            Auth["JwtAuthenticationFilter (JWT & PAT Support)"]
+            RestCtrl["REST Controllers (/api/**)"]
+            McpCtrl["McpController (/api/mcp - HTTP & SSE)"]
+        end
+
+        subgraph Core["Core Application Services (Single Source of Truth)"]
+            Access["AccessPolicy (Central Authorization & Anti-Enumeration)"]
+            CalService["CalendarService"]
+            EvtService["EventService & RecurrenceExpander"]
+            AvailService["AvailabilityService (Conflict Checking)"]
+            TokenService["TokenService (PAT Management)"]
+            NotifService["NotificationService & ReminderDispatcher"]
+        end
+
+        subgraph Persistence["Data & Migrations"]
+            Flyway["Flyway Database Migrations (V1 to V7)"]
+            JPA["Spring Data JPA (Hibernate ddl-auto: validate)"]
+        end
+    end
+
+    subgraph Storage["Cloud Managed Storage"]
+        DB[("Neon Serverless PostgreSQL 16<br>Pooled SSL Connection")]
+    end
+
+    Web -->|HTTPS REST API / Bearer JWT| Cors
+    AI -->|JSON-RPC 2.0 / Bearer PAT| Cors
+    Cors --> Auth
+    Auth --> RestCtrl
+    Auth --> McpCtrl
+
+    RestCtrl --> Access
+    McpCtrl --> Access
+
+    Access --> CalService
+    Access --> EvtService
+    Access --> AvailService
+    Access --> TokenService
+    Access --> NotifService
+
+    CalService --> JPA
+    EvtService --> JPA
+    AvailService --> JPA
+    TokenService --> JPA
+    NotifService --> JPA
+
+    Flyway -.->|Applies Migrations on Boot| DB
+    JPA ===>|TLS 1.3 Queries| DB
 ```
-backend/    Java 21, Spring Boot 3.5, PostgreSQL, Flyway
-frontend/   React (JavaScript) + Vite   (added in M6)
-docs/       Plan, architecture decision records
+
+---
+
+## 3. Database Schema & Entity-Relationship Diagram (ERD)
+
+The database schema is **100% managed by Flyway SQL migrations** (`V1__init_schema.sql` through `V7__personal_access_tokens.sql`) with strict relational integrity, composite unique constraints, and foreign key cascades:
+
+```mermaid
+erDiagram
+    users ||--o{ refresh_tokens : owns
+    users ||--o{ calendars : creates
+    users ||--o{ calendar_shares : receives
+    users ||--o{ user_calendar_prefs : configures
+    users ||--o{ personal_access_tokens : generates
+    users ||--o{ notifications : receives
+
+    calendars ||--o{ calendar_shares : shares
+    calendars ||--o{ user_calendar_prefs : has_prefs
+    calendars ||--o{ events : contains
+
+    events ||--o{ event_exceptions : has_exceptions
+    events ||--o{ reminders : has_reminders
+    reminders ||--o{ reminder_dispatches : tracks_dispatch
+
+    users {
+        bigint id PK
+        varchar email UK
+        varchar password_hash
+        varchar display_name
+        varchar time_zone
+        timestamp created_at
+    }
+
+    calendars {
+        bigint id PK
+        bigint owner_id FK
+        varchar name
+        varchar description
+        varchar color
+        boolean is_default
+    }
+
+    calendar_shares {
+        bigint id PK
+        bigint calendar_id FK
+        bigint user_id FK
+        varchar permission "VIEW | EDIT"
+    }
+
+    events {
+        bigint id PK
+        bigint calendar_id FK
+        varchar title
+        varchar description
+        varchar location
+        varchar color
+        boolean is_all_day
+        timestamptz start_at
+        timestamptz end_at
+        varchar time_zone
+        varchar rrule
+        time local_start_time
+        time local_end_time
+        bigint version "Optimistic Lock"
+    }
+
+    event_exceptions {
+        bigint id PK
+        bigint master_event_id FK
+        timestamptz original_start_at
+        boolean is_cancelled
+        timestamptz start_at
+        timestamptz end_at
+        varchar title
+    }
+
+    reminders {
+        bigint id PK
+        bigint event_id FK
+        integer minutes_before
+        varchar channel "IN_APP"
+    }
+
+    reminder_dispatches {
+        bigint id PK
+        bigint reminder_id FK
+        timestamptz occurrence_start
+        timestamptz dispatched_at
+    }
+
+    notifications {
+        bigint id PK
+        bigint user_id FK
+        bigint event_id FK
+        varchar title
+        varchar message
+        boolean is_read
+        timestamptz created_at
+    }
+
+    personal_access_tokens {
+        bigint id PK
+        bigint user_id FK
+        varchar name
+        varchar token_prefix
+        varchar token_hash UK
+        varchar scopes
+        timestamptz expires_at
+        timestamptz last_used_at
+        boolean revoked
+    }
 ```
 
-## Prerequisites
-- JDK 21
-- Maven 3.9+ (the Maven wrapper `./mvnw` is included)
+---
 
-## Local development
+## 4. Key Feature Walkthrough
 
-### 1. Configure the database
-Copy `.env.example` to `.env` and fill in your deployed PostgreSQL connection details (e.g. Neon free Postgres):
+### 1. Time-Zone & DST Intelligence
+* **Instant vs. Wall-Clock:** One-off events are stored as UTC instants (`timestamptz`). Recurring events preserve their local wall-clock time and IANA time zone (e.g. `America/New_York`).
+* **DST Transitions:** A 10:00 AM daily standup stays at 10:00 AM local time across Daylight Saving Time transitions, preventing meeting shifts.
+* **All-Day Events:** Pure calendar dates unaffected by UTC offsets.
+
+### 2. Full RFC 5545 Recurrence & 3-Tier Modification
+* **Query-Time Expansion:** Employs `lib-recur` to dynamically project recurrence occurrences across requested viewport ranges (`[timeMin, timeMax]`), keeping database storage at $O(1)$.
+* **Three Modification Modes:**
+  * `THIS`: Creates an `EventException` for that specific occurrence (reschedule or cancel) without duplicating or corrupting the series.
+  * `THIS_AND_FOLLOWING`: Truncates the original series with `UNTIL` and splits a new series from that date forward.
+  * `ALL`: Directly updates the root master event definition.
+
+### 3. Granular Multi-Calendar Sharing & Anti-Enumeration Security
+* **Sharing Permissions:** Calendars can be shared with individual users as `VIEW` (read-only) or `EDIT` (collaborative).
+* **Anti-Enumeration Protection:** If User A requests an event on User B's unshared calendar, the server returns `404 Not Found` (never `403 Forbidden`). This prevents attackers from enumerating sequential IDs.
+* **Default Calendar Invariance:** Every user is auto-provisioned a "Personal" calendar that cannot be deleted.
+
+### 4. Real-Time Conflict Detection & Availability Checking
+* When picking dates in the Event Modal, Zoner actively evaluates overlapping intervals (`startA < endB AND endA > startB`) across all visible calendars.
+* An inline warning banner alerts users to scheduling conflicts before saving.
+
+### 5. In-App Notifications & Cold-Start Safe Reminders
+* Scheduled dispatcher worker queries due reminders and inserts notifications into the user's inbox.
+* **Idempotency Guarantee:** Backed by PostgreSQL composite unique constraint `UNIQUE (reminder_id, occurrence_start)`. Duplicate notifications are physically impossible.
+* **Rolling Lookback Window:** If the application was asleep on Render's free tier, it catches up on missed reminders immediately upon wake-up.
+
+### 6. Global Search (`⌘K` / `Ctrl+K`)
+* Debounced (300 ms) search modal indexing event titles, descriptions, and locations across all accessible calendars.
+
+---
+
+## 5. Model Context Protocol (MCP) Integration
+
+Zoner exposes a fully compliant **Model Context Protocol (MCP)** server (spec `2024-11-05`), turning AI assistants into intelligent calendar agents.
+
+### Supported Tools:
+1. `list_calendars`: Returns all personal and shared calendars with ownership and permissions.
+2. `create_calendar`: Creates a new calendar with a custom name and color.
+3. `list_events`: Queries single and recurring events expanded across a date range.
+4. `get_event`: Retrieves full details, reminders, and exceptions for a specific event.
+5. `create_event`: Schedules single or recurring events with conflict checking.
+6. `update_event`: Reschedules or edits existing events.
+7. `delete_event`: Cancels events or recurring series.
+8. `search_events`: Keyword search across accessible calendars.
+9. `check_availability`: Queries time ranges for existing meetings and conflicts.
+
+### Connecting Claude Desktop:
+Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+```json
+{
+  "mcpServers": {
+    "zoner": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://zoner-backend.onrender.com/api/mcp",
+        "--header",
+        "Authorization: Bearer zoner_pat_YOUR_TOKEN_HERE"
+      ]
+    }
+  }
+}
+```
+
+### Connecting Cursor IDE:
+In Cursor Settings $\rightarrow$ **Features** $\rightarrow$ **MCP** $\rightarrow$ **Add New MCP Server**:
+* **Name:** `Zoner Calendar`
+* **Type:** `command`
+* **Command:** `npx -y mcp-remote https://zoner-backend.onrender.com/api/mcp --header "Authorization: Bearer zoner_pat_YOUR_TOKEN_HERE"`
+
+*(Generate your personal token inside Zoner via **User Menu → Settings & MCP**)*.
+
+---
+
+## 6. Local Development Setup
+
+### Prerequisites
+* **Java Development Kit (JDK):** Version 21 LTS
+* **Node.js:** Version 20+ LTS
+* **PostgreSQL:** Neon account or local PostgreSQL 16
+* **Git**
+
+### Step 1: Clone Repository
+```bash
+git clone https://github.com/rishavsair/Zoner.git
+cd Zoner
+```
+
+### Step 2: Configure Environment
+Copy `.env.example` to `.env`:
 ```bash
 cp .env.example .env
 ```
-Edit `.env`:
-```bash
+Provide your database connection details:
+```ini
 DB_URL=jdbc:postgresql://<HOST>:<PORT>/<DATABASE>?sslmode=require
 DB_USER=<USER>
 DB_PASSWORD=<PASSWORD>
 DB_POOL_SIZE=5
 PORT=8080
 CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
+JWT_SECRET=zoner-super-secure-default-jwt-secret-key-that-is-at-least-256-bits-long-for-hmac-sha-256
 ```
 
-### 2. Run the backend
+### Step 3: Run Backend
 ```bash
 cd backend
 ./mvnw spring-boot:run
 ```
-The backend automatically loads `.env`, applies Flyway migrations to your deployed PostgreSQL database, and starts the API on port 8080.
+Flyway automatically applies all migrations (`V1` to `V7`) and `DataSeeder` provisions the demo accounts.
+* Swagger UI: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+* Health Check: [http://localhost:8080/healthz](http://localhost:8080/healthz)
 
-### 3. Check it works
-| URL | Expected |
-|---|---|
-| http://localhost:8080/healthz | `{"status":"UP"}` |
-| http://localhost:8080/healthz/liveness | `{"status":"UP"}` (fast probe, does not ping DB) |
-| http://localhost:8080/swagger-ui.html | Swagger UI for the Zoner API |
-| http://localhost:8080/v3/api-docs | OpenAPI JSON |
-| http://localhost:8080/api/nothing | 404 in the standard error shape, with a `traceId` |
-
-### 4. Run the tests
+### Step 4: Run Frontend
+In a new terminal:
 ```bash
+cd frontend
+npm install
+npm run dev
+```
+Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+### Step 5: Run Automated Tests
+```bash
+# Backend unit & integration tests
 cd backend
-./mvnw verify
+./mvnw test
+
+# Frontend production build
+cd ../frontend
+npm run build
 ```
 
-## Configuration
-All configuration comes from environment variables or the root `.env` file. See [.env.example](.env.example). No secrets are committed.
+---
 
-| Variable | Purpose | Example |
-|---|---|---|
-| `DB_URL` | JDBC URL for PostgreSQL | `jdbc:postgresql://ep-...-pooler...neon.tech/neondb?sslmode=require` |
-| `DB_USER` / `DB_PASSWORD` | Database credentials | (from your Neon console) |
-| `DB_POOL_SIZE` | Connection pool size | `5` |
-| `PORT` | HTTP port | `8080` |
-| `CORS_ALLOWED_ORIGINS` | Comma-separated allowed frontend origins | `http://localhost:5173,https://your-frontend.vercel.app` |
+## 7. Configuration & Environment Variables
 
-## API error format
-Every error uses one JSON shape, so the UI can show friendly messages from the `code` field:
-```json
-{
-  "status": 404,
-  "code": "NOT_FOUND",
-  "message": "We could not find what you asked for.",
-  "traceId": "3f1c...",
-  "timestamp": "2026-10-02T10:15:30Z"
-}
-```
-Validation errors add a `details` array of `{ field, message }`.
+| Variable | Target | Purpose | Example |
+|---|---|---|---|
+| `DB_URL` | Backend | PostgreSQL JDBC URL with SSL | `jdbc:postgresql://ep-...neon.tech/neondb?sslmode=require` |
+| `DB_USER` | Backend | Database username | `neondb_owner` |
+| `DB_PASSWORD` | Backend | Database password | `secret_password` |
+| `DB_POOL_SIZE` | Backend | HikariCP maximum connection pool size | `5` (tuned for free tier) |
+| `PORT` | Backend | HTTP server listening port | `8080` (or `$PORT` on Render) |
+| `CORS_ALLOWED_ORIGINS`| Backend | Comma-separated or regex allowed origins | `http://localhost:5173,https://.*\.onrender\.com` |
+| `JWT_SECRET` | Backend | HMAC-SHA256 signing secret key (min 256 bits)| `zoner-super-secure-default-jwt-secret-...` |
+| `VITE_API_URL` | Frontend | Backend API base URL | `https://zoner-backend.onrender.com` |
 
-_Architecture diagram, deployment and MCP connection instructions are added in later milestones._
+---
+
+## 8. Documentation Index
+
+Detailed architectural and procedural documents are maintained in the repository:
+
+* **[User & Reviewer Guide (`docs/HOW_TO_USE.md`)](docs/HOW_TO_USE.md)**: Step-by-step evaluator walkthrough covering UI navigation, calendar sharing, conflict detection, and MCP tool testing.
+* **[Architecture & Decision Log (`docs/DECISIONS.md`)](docs/DECISIONS.md)**: Exhaustive rationale for all 10 architectural decisions taken from scratch to end.
+* **[MCP Authentication & Protocol Spec (`docs/MCP_AUTH.md`)](docs/MCP_AUTH.md)**: Security model, SHA-256 PAT hashing, and JSON-RPC 2.0 tool transport specification.
+* **[AI Usage Log (`AI_USAGE.md`)](AI_USAGE.md)**: Running log of AI prompts, code generation, human reviews, line-by-line verification, and bug refactorings.
+* **[Architecture Decision Records (`docs/adr/`)](docs/adr/)**:
+  * [ADR-001: Technology Stack](docs/adr/001-stack.md)
+  * [ADR-002: Time Model & Time Zones](docs/adr/002-time-model.md)
+  * [ADR-003: Recurrence Engine & Exceptions](docs/adr/003-recurrence.md)
+  * [ADR-004: Centralized AccessPolicy & Anti-Enumeration](docs/adr/004-access-policy.md)
+  * [ADR-005: Model Context Protocol & PAT Auth](docs/adr/005-mcp-pat.md)
+  * [ADR-006: Reminder Dispatcher Idempotency](docs/adr/006-reminders-idempotency.md)
+  * [ADR-007: Zero-Cost Cloud Deployment on Render](docs/adr/007-deployment-render.md)
+
+---
+
+## 9. Known Limitations & Production Scope
+
+In the spirit of honest senior engineering, the following intentional trade-offs are documented:
+
+1. **Free-Tier Cold Starts:** On Render's free tier, the backend web service spins down after 15 minutes of inactivity. First requests after sleep incur a 30–50 second wake-up delay.
+2. **Email Delivery Channel:** Outbound SMTP port 587/465 is blocked by Render on free-tier services to prevent spam. Reminders are fully dispatched via the in-app notification center and REST API; the email channel exists as an extensible stub.
+3. **Optimistic Concurrency:** In high-concurrency environments where multiple collaborators edit the same event simultaneously, optimistic locking (`@Version`) rejects stale updates with `409 Conflict`.
