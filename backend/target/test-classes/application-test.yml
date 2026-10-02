@@ -1,4 +1,0 @@
-# Datasource is supplied by Testcontainers (@ServiceConnection).
-logging:
-  level:
-    com.zoner: INFO

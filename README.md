@@ -17,30 +17,37 @@ docs/       Plan, architecture decision records
 
 ## Prerequisites
 - JDK 21
-- Maven 3.9+ (the Maven wrapper is generated once, see below)
-- Docker (for local Postgres and for the integration tests)
+- Maven 3.9+ (the Maven wrapper `./mvnw` is included)
 
 ## Local development
 
-### 1. Start PostgreSQL
+### 1. Configure the database
+Copy `.env.example` to `.env` and fill in your deployed PostgreSQL connection details (e.g. Neon free Postgres):
 ```bash
-cp .env.example .env          # optional; defaults work without it
-docker compose up -d db
+cp .env.example .env
+```
+Edit `.env`:
+```bash
+DB_URL=jdbc:postgresql://<HOST>:<PORT>/<DATABASE>?sslmode=require
+DB_USER=<USER>
+DB_PASSWORD=<PASSWORD>
+DB_POOL_SIZE=5
+PORT=8080
+CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
 ```
 
 ### 2. Run the backend
 ```bash
 cd backend
-mvn -N wrapper:wrapper        # one time: creates mvnw so others do not need Maven installed
-./mvnw spring-boot:run        # or: mvn spring-boot:run
+./mvnw spring-boot:run
 ```
-The `dev` profile is active by default and connects to the compose database.
+The backend automatically loads `.env`, applies Flyway migrations to your deployed PostgreSQL database, and starts the API on port 8080.
 
 ### 3. Check it works
 | URL | Expected |
 |---|---|
 | http://localhost:8080/healthz | `{"status":"UP"}` |
-| http://localhost:8080/healthz/liveness | `{"status":"UP"}` (does not touch the database) |
+| http://localhost:8080/healthz/liveness | `{"status":"UP"}` (fast probe, does not ping DB) |
 | http://localhost:8080/swagger-ui.html | Swagger UI for the Zoner API |
 | http://localhost:8080/v3/api-docs | OpenAPI JSON |
 | http://localhost:8080/api/nothing | 404 in the standard error shape, with a `traceId` |
@@ -48,19 +55,19 @@ The `dev` profile is active by default and connects to the compose database.
 ### 4. Run the tests
 ```bash
 cd backend
-./mvnw verify                 # needs Docker running (Testcontainers starts a real Postgres)
+./mvnw verify
 ```
 
 ## Configuration
-All configuration comes from environment variables. See [.env.example](.env.example). No secrets are committed.
+All configuration comes from environment variables or the root `.env` file. See [.env.example](.env.example). No secrets are committed.
 
-| Variable | Purpose | Default (dev only) |
+| Variable | Purpose | Example |
 |---|---|---|
-| `SPRING_PROFILES_ACTIVE` | `dev` or `prod` | `dev` |
-| `DB_URL` | JDBC URL | `jdbc:postgresql://localhost:5433/zoner` |
-| `DB_USER` / `DB_PASSWORD` | Database credentials | local compose values |
+| `DB_URL` | JDBC URL for PostgreSQL | `jdbc:postgresql://ep-...-pooler...neon.tech/neondb?sslmode=require` |
+| `DB_USER` / `DB_PASSWORD` | Database credentials | (from your Neon console) |
 | `DB_POOL_SIZE` | Connection pool size | `5` |
 | `PORT` | HTTP port | `8080` |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated allowed frontend origins | `http://localhost:5173,https://your-frontend.vercel.app` |
 
 ## API error format
 Every error uses one JSON shape, so the UI can show friendly messages from the `code` field:
