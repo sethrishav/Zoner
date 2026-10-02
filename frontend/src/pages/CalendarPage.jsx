@@ -81,7 +81,7 @@ export default function CalendarPage() {
 
   // Triggered when slot is clicked or dragged
   const handleSelectSlot = (slotInfo) => {
-    setSelectedSlot(slotInfo.start);
+    setSelectedSlot(slotInfo);
     setEditingEvent(null);
     setEditMode('ALL');
     setOccurrenceStart(null);
@@ -185,7 +185,7 @@ export default function CalendarPage() {
         isOpen={isEventModalOpen}
         onClose={() => setIsEventModalOpen(false)}
         onSaved={() => setRefreshTrigger((prev) => prev + 1)}
-        calendars={calendars.filter((c) => c.isOwner || c.permission === 'EDIT')}
+        calendars={calendars.filter((c) => c.isOwner || c.permission === 'OWNER' || c.permission === 'EDIT')}
         initialDate={selectedSlot}
         event={editingEvent}
         editMode={editMode}

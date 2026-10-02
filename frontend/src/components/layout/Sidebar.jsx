@@ -15,8 +15,8 @@ export default function Sidebar({
   const [miniDate, setMiniDate] = useState(selectedDate);
 
   // Group calendars into owned and shared
-  const myCalendars = calendars.filter((c) => c.isOwner);
-  const sharedCalendars = calendars.filter((c) => !c.isOwner);
+  const myCalendars = calendars.filter((c) => c.isOwner || c.permission === 'OWNER');
+  const sharedCalendars = calendars.filter((c) => !c.isOwner && c.permission !== 'OWNER');
 
   // Mini-calendar generation
   const monthStart = startOfMonth(miniDate);
