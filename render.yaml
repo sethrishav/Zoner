@@ -27,8 +27,9 @@ services:
   # ==============================================================================
   # 2. Zoner Frontend Static Site (React 18 / Vite SPA)
   # ==============================================================================
-  - type: static
+  - type: web
     name: zoner-frontend
+    runtime: static
     buildCommand: npm install && npm run build
     staticPublishPath: dist
     rootDir: frontend
