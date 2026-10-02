@@ -94,12 +94,34 @@ public class EventController {
     @Operation(summary = "Search events by title, description, or location across accessible calendars")
     public ResponseEntity<List<EventResponse>> searchEvents(
             @CurrentUser UserPrincipal principal,
-            @RequestParam("q") String query,
+            @RequestParam(value = "q", required = false) String q,
+            @RequestParam(value = "query", required = false) String queryParam,
             @RequestParam(value = "from", required = false) Instant from,
             @RequestParam(value = "to", required = false) Instant to,
             @RequestParam(value = "limit", defaultValue = "20") int limit) {
+        String query = (q != null && !q.isBlank()) ? q : (queryParam != null ? queryParam : "");
         List<EventResponse> events = eventService.searchEvents(principal.getId(), query, from, to, limit);
         return ResponseEntity.ok(events);
+    }
+
+    @GetMapping("/availability")
+    @Operation(summary = "Check availability via query parameters")
+    public ResponseEntity<AvailabilityResponse> checkAvailabilityGet(
+            @CurrentUser UserPrincipal principal,
+            @RequestParam(value = "start", required = false) Instant start,
+            @RequestParam(value = "from", required = false) Instant from,
+            @RequestParam(value = "end", required = false) Instant end,
+            @RequestParam(value = "to", required = false) Instant to,
+            @RequestParam(value = "calendarIds", required = false) List<Long> calendarIds,
+            @RequestParam(value = "excludeEventId", required = false) Long excludeEventId) {
+        Instant effectiveFrom = from != null ? from : start;
+        Instant effectiveTo = to != null ? to : end;
+        if (effectiveFrom == null || effectiveTo == null) {
+            throw new IllegalArgumentException("Start/from and end/to timestamps are required");
+        }
+        AvailabilityRequest request = new AvailabilityRequest(effectiveFrom, effectiveTo, calendarIds, excludeEventId);
+        AvailabilityResponse response = availabilityService.checkAvailability(principal.getId(), request);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/availability")
