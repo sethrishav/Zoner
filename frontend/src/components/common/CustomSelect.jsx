@@ -72,15 +72,15 @@ export default function CustomSelect({
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setIsOpen((prev) => !prev)}
-        className={`w-full flex items-center justify-between gap-2.5 rounded-xl border text-left transition-all ${
+        className={`w-full flex items-center justify-between gap-2 rounded-xl border text-left transition-all ${
           isOpen
             ? 'border-brand-500 ring-2 ring-brand-500/20 bg-white'
             : 'border-slate-200/90 bg-slate-50/70 hover:bg-white hover:border-slate-300'
         } ${
-          isSmall ? 'py-2 px-3 text-xs' : 'py-2.5 px-3.5 text-xs'
+          isSmall ? 'py-2 px-2.5 text-xs' : 'py-2.5 px-3.5 text-xs'
         } ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer shadow-2xs'}`}
       >
-        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           {selectedOption?.color && (
             <span
               className="w-3 h-3 rounded-full shrink-0 shadow-xs border border-white"
@@ -88,7 +88,7 @@ export default function CustomSelect({
             />
           )}
           {selectedOption?.icon && (
-            <span className="shrink-0 text-slate-400">{selectedOption.icon}</span>
+            <span className="shrink-0 text-slate-500 flex items-center">{selectedOption.icon}</span>
           )}
           <span className="truncate font-medium text-slate-800">
             {selectedOption ? selectedOption.label : <span className="text-slate-400">{placeholder}</span>}
@@ -101,7 +101,7 @@ export default function CustomSelect({
         </div>
 
         <ChevronDown
-          className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 ${
+          className={`${isSmall ? 'w-3.5 h-3.5' : 'w-4 h-4'} text-slate-400 transition-transform duration-200 shrink-0 ${
             isOpen ? 'rotate-180 text-brand-600' : ''
           }`}
         />

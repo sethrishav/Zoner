@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../../api/client';
 import { getErrorMessage } from '../../api/errors';
 import { useToast } from '../../context/ToastContext';
-import { X, Calendar, Clock, MapPin, AlignLeft, RefreshCw, Bell, AlertTriangle, Trash2, Plus, ChevronDown } from 'lucide-react';
+import { X, Calendar, Clock, MapPin, AlignLeft, RefreshCw, Bell, AlertTriangle, Trash2, Plus, ChevronDown, Mail, Smartphone } from 'lucide-react';
 import { format, parseISO, addHours } from 'date-fns';
 import CustomSelect from '../common/CustomSelect';
 
@@ -519,15 +519,27 @@ export default function EventModal({
             <div className="space-y-2">
               {reminders.map((r, idx) => (
                 <div key={idx} className="flex items-center gap-2.5">
-                  <div className="w-32 shrink-0">
+                  <div className="w-36 shrink-0">
                     <CustomSelect
                       size="sm"
                       value={r.channel}
                       onChange={(val) => handleReminderChange(idx, 'channel', val)}
                       options={[
-                        { value: 'IN_APP', label: 'In-App', badge: 'Push' },
-                        { value: 'EMAIL', label: 'Email', badge: 'Inbox' },
-                        { value: 'SMS', label: 'SMS', badge: 'Mobile' },
+                        {
+                          value: 'IN_APP',
+                          label: 'In-App',
+                          icon: <Bell className="w-3.5 h-3.5 text-brand-600" />,
+                        },
+                        {
+                          value: 'EMAIL',
+                          label: 'Email',
+                          icon: <Mail className="w-3.5 h-3.5 text-blue-600" />,
+                        },
+                        {
+                          value: 'SMS',
+                          label: 'SMS',
+                          icon: <Smartphone className="w-3.5 h-3.5 text-emerald-600" />,
+                        },
                       ]}
                     />
                   </div>
