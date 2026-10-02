@@ -155,8 +155,11 @@ export default function SettingsModal({ isOpen, onClose }) {
     if (import.meta.env.VITE_MCP_SERVER_URL) {
       return import.meta.env.VITE_MCP_SERVER_URL.replace(/\/api\/mcp\/?$/, '').replace(/\/+$/, '');
     }
-    const apiUrl = import.meta.env.VITE_API_URL;
+    let apiUrl = import.meta.env.VITE_API_URL;
     if (apiUrl && !apiUrl.startsWith('/')) {
+      if (!apiUrl.startsWith('http://') && !apiUrl.startsWith('https://')) {
+        apiUrl = `https://${apiUrl}`;
+      }
       try {
         const parsed = new URL(apiUrl);
         return parsed.origin;

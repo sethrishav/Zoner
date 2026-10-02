@@ -1,4 +1,14 @@
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+const resolveApiBase = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (!envUrl) return '/api';
+  let trimmed = envUrl.trim().replace(/\/+$/, '');
+  if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://') && !trimmed.startsWith('/')) {
+    trimmed = `https://${trimmed}`;
+  }
+  return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+};
+
+const API_BASE = resolveApiBase();
 
 const TOKEN_KEY = 'zoner_access_token';
 const REFRESH_KEY = 'zoner_refresh_token';
