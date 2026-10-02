@@ -4,6 +4,7 @@ import { getErrorMessage } from '../../api/errors';
 import { useToast } from '../../context/ToastContext';
 import { X, Calendar, Clock, MapPin, AlignLeft, RefreshCw, Bell, AlertTriangle, Trash2, Plus, ChevronDown } from 'lucide-react';
 import { format, parseISO, addHours } from 'date-fns';
+import CustomSelect from '../common/CustomSelect';
 
 const PRESET_COLORS = [
   '#4f46e5', // Indigo
@@ -323,24 +324,22 @@ export default function EventModal({
               <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
                 Calendar
               </label>
-              <div className="relative">
-                <select
-                  value={calendarId}
-                  onChange={(e) => {
-                    setCalendarId(e.target.value);
-                    const selected = calendars.find((c) => c.id === Number(e.target.value));
-                    if (selected?.color) setColor(selected.color);
-                  }}
-                  className="w-full appearance-none bg-slate-50/60 hover:bg-white focus:bg-white text-xs font-medium text-slate-700 rounded-xl border border-slate-200 py-2.5 pl-3.5 pr-10 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all cursor-pointer shadow-2xs"
-                >
-                  {calendars.map((cal) => (
-                    <option key={cal.id} value={cal.id}>
-                      {cal.name} {cal.isDefault ? '(Default)' : ''}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
+              <CustomSelect
+                value={calendarId}
+                onChange={(val) => {
+                  setCalendarId(val);
+                  const selected = calendars.find((c) => c.id === Number(val));
+                  if (selected?.color) setColor(selected.color);
+                }}
+                options={calendars.map((cal) => ({
+                  value: cal.id,
+                  label: cal.name,
+                  color: cal.color,
+                  badge: cal.isDefault ? 'Default' : (!cal.isOwner ? 'Shared' : null),
+                  description: cal.isDefault ? 'Primary personal calendar' : (!cal.isOwner ? `Permission: ${cal.permission}` : null),
+                }))}
+                placeholder="Select a calendar..."
+              />
             </div>
 
             <div>
@@ -387,18 +386,17 @@ export default function EventModal({
               </label>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="p-3 bg-slate-50/70 border border-slate-200/80 rounded-xl space-y-1.5">
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Starts
-                </label>
-                <div className="flex gap-2">
+            <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-3.5 space-y-2.5">
+              {/* Starts row */}
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-semibold text-slate-500 w-12 shrink-0">Starts</span>
+                <div className="flex items-center gap-2 flex-1 min-w-0">
                   <input
                     type="date"
                     required
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="flex-1 text-xs font-medium rounded-lg border border-slate-200 bg-white py-1.5 px-2.5 text-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-500 shadow-2xs"
+                    className="flex-1 min-w-0 text-xs font-medium rounded-xl border border-slate-200 bg-white py-2 px-3 text-slate-800 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-2xs transition-all cursor-pointer"
                   />
                   {!allDay && (
                     <input
@@ -406,23 +404,22 @@ export default function EventModal({
                       required
                       value={startTime}
                       onChange={(e) => setStartTime(e.target.value)}
-                      className="w-24 text-xs font-medium rounded-lg border border-slate-200 bg-white py-1.5 px-2 text-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-500 shadow-2xs"
+                      className="w-32 shrink-0 text-xs font-medium rounded-xl border border-slate-200 bg-white py-2 px-3 text-slate-800 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-2xs transition-all cursor-pointer"
                     />
                   )}
                 </div>
               </div>
 
-              <div className="p-3 bg-slate-50/70 border border-slate-200/80 rounded-xl space-y-1.5">
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Ends
-                </label>
-                <div className="flex gap-2">
+              {/* Ends row */}
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-semibold text-slate-500 w-12 shrink-0">Ends</span>
+                <div className="flex items-center gap-2 flex-1 min-w-0">
                   <input
                     type="date"
                     required
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="flex-1 text-xs font-medium rounded-lg border border-slate-200 bg-white py-1.5 px-2.5 text-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-500 shadow-2xs"
+                    className="flex-1 min-w-0 text-xs font-medium rounded-xl border border-slate-200 bg-white py-2 px-3 text-slate-800 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-2xs transition-all cursor-pointer"
                   />
                   {!allDay && (
                     <input
@@ -430,7 +427,7 @@ export default function EventModal({
                       required
                       value={endTime}
                       onChange={(e) => setEndTime(e.target.value)}
-                      className="w-24 text-xs font-medium rounded-lg border border-slate-200 bg-white py-1.5 px-2 text-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-500 shadow-2xs"
+                      className="w-32 shrink-0 text-xs font-medium rounded-xl border border-slate-200 bg-white py-2 px-3 text-slate-800 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-2xs transition-all cursor-pointer"
                     />
                   )}
                 </div>
@@ -445,19 +442,16 @@ export default function EventModal({
               Repeat
             </span>
             <div className={`grid gap-3 ${recurrenceFreq !== 'NONE' ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
-              <div className="relative">
-                <select
-                  value={recurrenceFreq}
-                  onChange={(e) => setRecurrenceFreq(e.target.value)}
-                  className="w-full appearance-none bg-slate-50/60 hover:bg-white focus:bg-white text-xs font-medium text-slate-700 rounded-xl border border-slate-200 py-2.5 pl-3.5 pr-10 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all cursor-pointer shadow-2xs"
-                >
-                  <option value="NONE">Does not repeat</option>
-                  <option value="DAILY">Repeats Daily</option>
-                  <option value="WEEKLY">Repeats Weekly</option>
-                  <option value="MONTHLY">Repeats Monthly</option>
-                </select>
-                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
+              <CustomSelect
+                value={recurrenceFreq}
+                onChange={(val) => setRecurrenceFreq(val)}
+                options={[
+                  { value: 'NONE', label: 'Does not repeat', description: 'One-time event' },
+                  { value: 'DAILY', label: 'Repeats Daily', description: 'Repeats every day' },
+                  { value: 'WEEKLY', label: 'Repeats Weekly', description: 'Repeats once a week' },
+                  { value: 'MONTHLY', label: 'Repeats Monthly', description: 'Repeats once a month' },
+                ]}
+              />
 
               {recurrenceFreq !== 'NONE' && (
                 <div className="relative">
@@ -525,32 +519,29 @@ export default function EventModal({
             <div className="space-y-2">
               {reminders.map((r, idx) => (
                 <div key={idx} className="flex items-center gap-2.5">
-                  <div className="relative w-32">
-                    <select
+                  <div className="w-32 shrink-0">
+                    <CustomSelect
+                      size="sm"
                       value={r.channel}
-                      onChange={(e) => handleReminderChange(idx, 'channel', e.target.value)}
-                      className="w-full appearance-none text-xs font-medium rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white focus:bg-white py-2 pl-3 pr-8 text-slate-700 focus:outline-none focus:border-brand-500 shadow-2xs cursor-pointer"
-                    >
-                      <option value="IN_APP">In-App</option>
-                      <option value="EMAIL">Email</option>
-                      <option value="SMS">SMS</option>
-                    </select>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      onChange={(val) => handleReminderChange(idx, 'channel', val)}
+                      options={[
+                        { value: 'IN_APP', label: 'In-App', badge: 'Push' },
+                        { value: 'EMAIL', label: 'Email', badge: 'Inbox' },
+                        { value: 'SMS', label: 'SMS', badge: 'Mobile' },
+                      ]}
+                    />
                   </div>
 
-                  <div className="relative flex-1">
-                    <select
+                  <div className="flex-1 min-w-0">
+                    <CustomSelect
+                      size="sm"
                       value={r.minutesBefore}
-                      onChange={(e) => handleReminderChange(idx, 'minutesBefore', Number(e.target.value))}
-                      className="w-full appearance-none text-xs font-medium rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white focus:bg-white py-2 pl-3 pr-8 text-slate-700 focus:outline-none focus:border-brand-500 shadow-2xs cursor-pointer"
-                    >
-                      {REMINDER_PRESETS.map((p) => (
-                        <option key={p.value} value={p.value}>
-                          {p.label}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      onChange={(val) => handleReminderChange(idx, 'minutesBefore', Number(val))}
+                      options={REMINDER_PRESETS.map((p) => ({
+                        value: p.value,
+                        label: p.label,
+                      }))}
+                    />
                   </div>
 
                   <button
