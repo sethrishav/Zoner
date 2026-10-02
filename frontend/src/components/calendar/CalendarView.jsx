@@ -23,7 +23,8 @@ export default function CalendarView({
 
   const [events, setEvents] = useState([]);
   const [currentTitle, setCurrentTitle] = useState('');
-  const [currentView, setCurrentView] = useState('timeGridWeek');
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  const [currentView, setCurrentView] = useState(isMobile ? 'timeGridDay' : 'timeGridWeek');
   const [currentRange, setCurrentRange] = useState({ from: null, to: null });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -258,45 +259,50 @@ export default function CalendarView({
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col min-w-0">
       {/* Calendar Top Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-2 border-b border-slate-100">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleToday}
-            className="px-3 py-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/80 rounded-lg transition-colors shadow-2xs"
-          >
-            Today
-          </button>
-          <div className="flex items-center gap-1">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 mb-2 border-b border-slate-100">
+        <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3 w-full sm:w-auto">
+          <div className="flex items-center gap-1.5 shrink-0">
             <button
-              onClick={handlePrev}
-              className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
-              title="Previous"
+              onClick={handleToday}
+              className="px-2.5 py-1 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/80 rounded-lg transition-colors shadow-2xs cursor-pointer"
             >
-              <ChevronLeft className="w-4 h-4" />
+              Today
             </button>
-            <button
-              onClick={handleNext}
-              className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
-              title="Next"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
+            <div className="flex items-center">
+              <button
+                onClick={handlePrev}
+                className="p-1 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                title="Previous"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={handleNext}
+                className="p-1 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                title="Next"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-          <h2 className="text-lg font-bold text-slate-800 tracking-tight">
-            {currentTitle || 'Calendar'}
-          </h2>
-          {isLoading && (
-            <div className="w-4 h-4 border-2 border-brand-200 border-t-brand-600 rounded-full animate-spin ml-2" />
-          )}
+
+          <div className="flex items-center gap-1.5 min-w-0">
+            <h2 className="text-sm sm:text-lg font-bold text-slate-800 tracking-tight truncate">
+              {currentTitle || 'Calendar'}
+            </h2>
+            {isLoading && (
+              <div className="w-3.5 h-3.5 border-2 border-brand-200 border-t-brand-600 rounded-full animate-spin shrink-0" />
+            )}
+          </div>
         </div>
 
         {/* View Switcher */}
-        <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200/50 self-start sm:self-auto">
+        <div className="flex items-center gap-0.5 sm:gap-1 bg-slate-100/80 p-0.5 sm:p-1 rounded-xl border border-slate-200/50 self-end sm:self-auto shrink-0">
           <button
             onClick={() => handleViewChange('dayGridMonth')}
-            className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
+            className={`px-2.5 sm:px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               currentView === 'dayGridMonth'
                 ? 'bg-white text-slate-900 shadow-xs'
                 : 'text-slate-500 hover:text-slate-800'
@@ -306,7 +312,7 @@ export default function CalendarView({
           </button>
           <button
             onClick={() => handleViewChange('timeGridWeek')}
-            className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
+            className={`px-2.5 sm:px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               currentView === 'timeGridWeek'
                 ? 'bg-white text-slate-900 shadow-xs'
                 : 'text-slate-500 hover:text-slate-800'
@@ -316,7 +322,7 @@ export default function CalendarView({
           </button>
           <button
             onClick={() => handleViewChange('timeGridDay')}
-            className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
+            className={`px-2.5 sm:px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               currentView === 'timeGridDay'
                 ? 'bg-white text-slate-900 shadow-xs'
                 : 'text-slate-500 hover:text-slate-800'
@@ -328,25 +334,26 @@ export default function CalendarView({
       </div>
 
       {/* FullCalendar Body */}
-      <div className="flex-1 min-h-[500px]">
+      <div className="flex-1 min-h-[450px] overflow-hidden">
         <FullCalendar
           ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-          initialView="timeGridWeek"
+          initialView={isMobile ? 'timeGridDay' : 'timeGridWeek'}
           timeZone="local"
           headerToolbar={false}
+          dayHeaderFormat={{ weekday: 'short', day: 'numeric', omitCommas: true }}
           allDaySlot={true}
           slotMinTime="00:00:00"
           slotMaxTime="24:00:00"
-          scrollTime="07:00:00"
+          scrollTime="08:00:00"
           nowIndicator={true}
           selectable={true}
           editable={true}
           eventDurationEditable={true}
           selectMirror={true}
           dayMaxEvents={3}
-          eventMinHeight={26}
-          eventShortHeight={30}
+          eventMinHeight={22}
+          eventShortHeight={26}
           eventContent={renderEventContent}
           events={fcEvents}
           datesSet={handleDatesSet}

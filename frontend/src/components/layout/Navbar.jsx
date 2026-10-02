@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api/client';
-import { Calendar, Bell, Search, Globe, LogOut, Check, Trash2, Clock, ChevronDown, Key } from 'lucide-react';
+import { Calendar, Bell, Search, Globe, LogOut, Check, Trash2, Clock, ChevronDown, Key, Menu } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import SettingsModal from '../settings/SettingsModal';
 
-export default function Navbar({ onOpenSearch, onViewChange, currentView = 'timeGridWeek' }) {
+export default function Navbar({ onOpenSearch, onViewChange, currentView = 'timeGridWeek', onToggleMobileSidebar }) {
   const { user, logout } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
@@ -93,14 +93,24 @@ export default function Navbar({ onOpenSearch, onViewChange, currentView = 'time
   }, []);
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between z-30 sticky top-0">
-      {/* Brand & Title */}
-      <div className="flex items-center gap-3">
-        <div className="w-9 h-9 bg-gradient-to-tr from-brand-600 to-indigo-500 rounded-lg flex items-center justify-center shadow-md shadow-brand-500/15">
-          <Calendar className="w-5 h-5 text-white" />
+    <header className="h-16 bg-white border-b border-slate-200 px-3 sm:px-6 flex items-center justify-between z-30 sticky top-0">
+      {/* Brand & Mobile Hamburger */}
+      <div className="flex items-center gap-2 sm:gap-3">
+        {/* Mobile Hamburger Menu Button */}
+        <button
+          onClick={onToggleMobileSidebar}
+          className="md:hidden p-1.5 -ml-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+          aria-label="Toggle Navigation & Calendars"
+          title="Open Calendars"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+
+        <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-tr from-brand-600 to-indigo-500 rounded-lg flex items-center justify-center shadow-md shadow-brand-500/15 shrink-0">
+          <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
         </div>
         <div>
-          <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+          <span className="text-lg sm:text-xl font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
             Zoner
           </span>
           <span className="hidden sm:inline-block ml-2 text-xs font-medium text-slate-400">
@@ -109,7 +119,7 @@ export default function Navbar({ onOpenSearch, onViewChange, currentView = 'time
         </div>
       </div>
 
-      {/* Center Search Trigger */}
+      {/* Center Search Trigger (Desktop) */}
       <div className="flex-1 max-w-md mx-4 hidden md:block">
         <button
           onClick={onOpenSearch}
@@ -126,7 +136,17 @@ export default function Navbar({ onOpenSearch, onViewChange, currentView = 'time
       </div>
 
       {/* Right Controls */}
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-3">
+        {/* Mobile Search Button */}
+        <button
+          onClick={onOpenSearch}
+          className="md:hidden p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+          aria-label="Search"
+          title="Search events"
+        >
+          <Search className="w-5 h-5" />
+        </button>
+
         {/* Time Zone Indicator */}
         <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 border border-slate-200/80 rounded-full text-xs font-medium text-slate-600">
           <Globe className="w-3.5 h-3.5 text-brand-600" />

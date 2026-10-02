@@ -105,3 +105,47 @@
 .fc-highlight {
   background: rgba(99, 102, 241, 0.1) !important;
 }
+
+/* Mobile Viewport Adjustments */
+@media (max-width: 640px) {
+  .fc .fc-col-header-cell {
+    padding: 4px 0;
+  }
+
+  .fc .fc-col-header-cell-cushion {
+    font-size: 10px;
+    letter-spacing: 0;
+  }
+
+  .fc .fc-timegrid-slot {
+    height: 40px;
+  }
+
+  .fc .fc-timegrid-slot-label-cushion {
+    font-size: 9px;
+    padding: 0 2px;
+  }
+
+  .fc .fc-timegrid-axis-cushion {
+    font-size: 9px;
+  }
+
+  .fc-event {
+    font-size: 10px !important;
+  }
+
+  .fc-timegrid-event {
+    min-height: 22px !important;
+  }
+
+  .fc-daygrid-day-number {
+    font-size: 10px;
+    padding: 2px 4px !important;
+  }
+
+  .fc-day-today .fc-daygrid-day-number {
+    width: 20px;
+    height: 20px;
+    margin: 2px;
+  }
+}

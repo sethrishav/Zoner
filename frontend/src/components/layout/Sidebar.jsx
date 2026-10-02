@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Calendar as CalendarIcon, Users, Check, ChevronLeft, ChevronRight, Share2, Settings } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, Users, Check, ChevronLeft, ChevronRight, Share2, Settings, X } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, isToday } from 'date-fns';
 
 export default function Sidebar({
@@ -11,6 +11,8 @@ export default function Sidebar({
   onOpenShareCalendar,
   selectedDate = new Date(),
   onSelectDate,
+  onClose,
+  isMobile = false,
 }) {
   const [miniDate, setMiniDate] = useState(selectedDate);
 
@@ -26,11 +28,28 @@ export default function Sidebar({
   const days = eachDayOfInterval({ start: startDate, end: endDate });
 
   return (
-    <aside className="w-64 bg-white border-r border-slate-200 flex flex-col h-[calc(100vh-4rem)] p-4 overflow-y-auto">
+    <aside className={`w-full md:w-64 bg-white border-r border-slate-200 flex flex-col ${isMobile ? 'h-full' : 'h-[calc(100vh-4rem)]'} p-4 overflow-y-auto`}>
+      {/* Mobile Drawer Header */}
+      {isMobile && (
+        <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <CalendarIcon className="w-4 h-4 text-brand-600" />
+            <span className="text-sm font-bold text-slate-800">Calendars & Filters</span>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+            aria-label="Close Sidebar"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+
       {/* Primary Action Button */}
       <button
         onClick={onOpenCreateEvent}
-        className="w-full py-2.5 px-4 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-semibold text-sm shadow-md shadow-brand-500/20 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+        className="w-full py-2.5 px-4 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-semibold text-sm shadow-md shadow-brand-500/20 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
       >
         <Plus className="w-4 h-4 stroke-[2.5]" />
         <span>Create Event</span>
