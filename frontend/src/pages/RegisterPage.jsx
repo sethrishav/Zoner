@@ -104,7 +104,7 @@ export default function RegisterPage() {
                   required
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="Alex Rivera"
+                  placeholder="Zoner User"
                   className="block w-full pl-10 pr-3.5 py-2 text-sm rounded-lg border border-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-slate-900"
                 />
               </div>
@@ -123,7 +123,7 @@ export default function RegisterPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="alex@company.com"
+                  placeholder="zone_user@company.com"
                   className="block w-full pl-10 pr-3.5 py-2 text-sm rounded-lg border border-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-slate-900"
                 />
               </div>
