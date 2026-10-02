@@ -70,11 +70,13 @@ public class EventController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Delete an event (requires EDIT permission)")
+    @Operation(summary = "Delete an event or recurrence occurrence (requires EDIT permission)")
     public void deleteEvent(
             @CurrentUser UserPrincipal principal,
-            @PathVariable Long id) {
-        eventService.deleteEvent(principal.getId(), id);
+            @PathVariable Long id,
+            @RequestParam(value = "editMode", defaultValue = "ALL") EventDto.RecurrenceEditMode editMode,
+            @RequestParam(value = "originalStart", required = false) Instant originalStart) {
+        eventService.deleteEvent(principal.getId(), id, editMode, originalStart);
     }
 
     @GetMapping

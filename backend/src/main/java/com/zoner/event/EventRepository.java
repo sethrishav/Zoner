@@ -35,6 +35,38 @@ public interface EventRepository extends JpaRepository<Event, Long> {
         JOIN FETCH e.calendar
         LEFT JOIN FETCH e.reminders
         WHERE e.calendar.id IN :calendarIds
+          AND e.recurrenceRule IS NULL
+          AND e.startAt < :to
+          AND e.endAt > :from
+        ORDER BY e.startAt ASC
+    """)
+    List<Event> findNonRecurringEventsInRange(
+            @Param("calendarIds") List<Long> calendarIds,
+            @Param("from") Instant from,
+            @Param("to") Instant to
+    );
+
+    @Query("""
+        SELECT DISTINCT e FROM Event e
+        JOIN FETCH e.calendar
+        LEFT JOIN FETCH e.reminders
+        WHERE e.calendar.id IN :calendarIds
+          AND e.recurrenceRule IS NOT NULL
+          AND e.startAt < :to
+          AND (e.recurrenceUntil IS NULL OR e.recurrenceUntil > :from)
+        ORDER BY e.startAt ASC
+    """)
+    List<Event> findRecurringEventsCandidates(
+            @Param("calendarIds") List<Long> calendarIds,
+            @Param("from") Instant from,
+            @Param("to") Instant to
+    );
+
+    @Query("""
+        SELECT DISTINCT e FROM Event e
+        JOIN FETCH e.calendar
+        LEFT JOIN FETCH e.reminders
+        WHERE e.calendar.id IN :calendarIds
           AND (
                LOWER(e.title) LIKE LOWER(CONCAT('%', :term, '%'))
             OR LOWER(e.description) LIKE LOWER(CONCAT('%', :term, '%'))

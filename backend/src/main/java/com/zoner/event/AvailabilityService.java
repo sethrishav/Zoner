@@ -14,17 +14,18 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AvailabilityService {
 
-    private final EventRepository eventRepository;
+    private final EventService eventService;
     private final AccessPolicy accessPolicy;
 
-    public AvailabilityService(EventRepository eventRepository, AccessPolicy accessPolicy) {
-        this.eventRepository = eventRepository;
+    public AvailabilityService(EventService eventService, AccessPolicy accessPolicy) {
+        this.eventService = eventService;
         this.accessPolicy = accessPolicy;
     }
 
     /**
      * Checks availability across the specified calendars (or all accessible calendars by default)
      * using the standard interval overlap rule: startA < endB AND endA > startB.
+     * Fully recurrence-aware: expands recurring events and respects exceptions.
      * Note: Edge-touching intervals (startA == endB or endA == startB) do NOT conflict.
      */
     @Transactional(readOnly = true)
@@ -47,15 +48,23 @@ public class AvailabilityService {
             return new AvailabilityResponse(true, List.of());
         }
 
-        List<Event> conflicts = (request.excludeEventId() != null)
-                ? eventRepository.findConflictingEventsExcluding(targetCalendarIds, request.from(), request.to(), request.excludeEventId())
-                : eventRepository.findConflictingEvents(targetCalendarIds, request.from(), request.to());
+        List<EventResponse> occurrences = eventService.listEventsInRange(
+                userId, request.from(), request.to(), targetCalendarIds);
 
-        List<EventResponse> conflictResponses = conflicts.stream()
-                .map(EventResponse::from)
+        List<EventResponse> conflicts = occurrences.stream()
+                .filter(e -> {
+                    if (request.excludeEventId() != null && e.id().equals(request.excludeEventId())) {
+                        if (request.excludeOriginalStart() != null) {
+                            return !request.excludeOriginalStart().equals(e.originalStart());
+                        }
+                        return false;
+                    }
+                    return true;
+                })
+                .filter(e -> overlaps(request.from(), request.to(), e.startAt(), e.endAt()))
                 .toList();
 
-        return new AvailabilityResponse(conflictResponses.isEmpty(), conflictResponses);
+        return new AvailabilityResponse(conflicts.isEmpty(), conflicts);
     }
 
     /**
