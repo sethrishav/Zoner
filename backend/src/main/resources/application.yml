@@ -1,12 +1,13 @@
 spring:
   application:
     name: zoner
-  profiles:
-    active: dev            # overridden by SPRING_PROFILES_ACTIVE (e.g. prod)
   datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/zoner}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
     hikari:
       maximum-pool-size: ${DB_POOL_SIZE:5}
-      connection-timeout: 20000   # tolerate a sleeping (scale-to-zero) database waking up
+      connection-timeout: 30000   # tolerate cloud DB (e.g. Neon) wake up from scale-to-zero
   jpa:
     open-in-view: false
     hibernate:
@@ -29,6 +30,9 @@ server:
     include-message: never
     include-stacktrace: never
     include-binding-errors: never
+
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
 
 management:
   endpoints:
@@ -53,3 +57,5 @@ springdoc:
 logging:
   pattern:
     level: "%5p [%X{traceId:-}]"
+  level:
+    com.zoner: INFO

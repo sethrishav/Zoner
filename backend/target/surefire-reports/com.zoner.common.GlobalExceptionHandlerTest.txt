@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.zoner.common.GlobalExceptionHandlerTest
 -------------------------------------------------------------------------------
-Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.513 s -- in com.zoner.common.GlobalExceptionHandlerTest
+Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.614 s -- in com.zoner.common.GlobalExceptionHandlerTest

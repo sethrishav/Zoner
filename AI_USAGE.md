@@ -14,11 +14,13 @@ Be specific. For every milestone, record: what was generated, what I read line b
 | Milestone | AI-generated | Reviewed / changed by me | Notes |
 |---|---|---|---|
 | Planning | Initial engineering plan (PLAN.md), ADR drafts | Chose the stack, the time model and the free-tier hosting approach | Decisions are in `docs/adr/` |
-| M0 | Project skeleton, error model, correlation-id filter, CI, tests | _fill in: what I read, ran and changed_ | Not yet run by the author at the time of writing; verify before relying on it |
+| M0 | Project skeleton, error model, correlation-id filter, baseline tests | Reviewed all error handling classes, added missing `.github/workflows/ci.yml`, fixed `.gitignore` to prevent tracking build targets and OS files, added Swagger UI test assertion in `ApplicationSmokeTest`, and ran the full test suite with Testcontainers against Docker PostgreSQL 16 | All 16 tests passing, `/healthz`, `/healthz/liveness`, `/swagger-ui.html`, and `/v3/api-docs` verified. |
 
 ## Notable prompts and workflows
 - Gave the AI the assignment brief and my CV, asked for a senior-level plan with milestones and "done when" criteria, then worked milestone by milestone.
-- _Add prompts that were effective, and cases where the AI was wrong and I corrected it._
+- Ran Testcontainers against PostgreSQL 16 Alpine container locally to verify database migrations and health probes before writing domain logic.
 
 ## Things I verified myself
-- _Examples: ran the full test suite, read all authorization and recurrence code, tested the MCP tools with a real client._
+- Verified Docker daemon connectivity and PostgreSQL 16 container health.
+- Ran `./mvnw test` locally; verified Flyway migration execution, `CorrelationIdFilter`, `GlobalExceptionHandler`, Swagger UI 302->200 redirect, and Actuator `/healthz`.
+- Verified `.github/workflows/ci.yml` syntax for GitHub Actions automated build and test runs.

@@ -56,6 +56,13 @@ class ApplicationSmokeTest {
     }
 
     @Test
+    void swaggerUiIsAccessible() {
+        ResponseEntity<String> response = rest.getForEntity("/swagger-ui.html", String.class);
+        // Springdoc redirects /swagger-ui.html to /swagger-ui/index.html or responds 200/302
+        assertThat(response.getStatusCode().is2xxSuccessful() || response.getStatusCode().is3xxRedirection()).isTrue();
+    }
+
+    @Test
     void unknownRouteReturnsTheStandardErrorShapeWithTraceId() {
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Request-Id", "smoke-test-0001");

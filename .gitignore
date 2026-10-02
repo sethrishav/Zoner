@@ -1,0 +1,34 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment & secrets
+.env
+*.env.local
+
+# Build artifacts
+**/target/
+backend/target/
+frontend/dist/
+**/dist/
+
+# Dependencies
+frontend/node_modules/
+**/node_modules/
+
+# Logs
+*.log
+logs/
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+*.sublime-workspace
+*.sublime-project
+*.swp
+*~
+
+# Stray files
+5432
+backend/5432
