@@ -55,8 +55,10 @@ export default function SettingsModal({ isOpen, onClose }) {
   const [timeZone, setTimeZone] = useState(user?.timeZone || 'UTC');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
-  // Config snippet client tab
+  // Config snippet client tab & custom server URL override
   const [clientType, setClientType] = useState('cursor'); // 'cursor' | 'claude_desktop' | 'claude_code' | 'curl'
+  const [customServerUrl, setCustomServerUrl] = useState('');
+  const [isEditingServerUrl, setIsEditingServerUrl] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -148,7 +150,25 @@ export default function SettingsModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   const sampleToken = newlyCreatedToken || 'YOUR_PERSONAL_ACCESS_TOKEN';
-  const apiBase = window.location.origin;
+  
+  const resolveDefaultApiBase = () => {
+    if (import.meta.env.VITE_MCP_SERVER_URL) {
+      return import.meta.env.VITE_MCP_SERVER_URL.replace(/\/api\/mcp\/?$/, '').replace(/\/+$/, '');
+    }
+    const apiUrl = import.meta.env.VITE_API_URL;
+    if (apiUrl && !apiUrl.startsWith('/')) {
+      try {
+        const parsed = new URL(apiUrl);
+        return parsed.origin;
+      } catch {
+        return apiUrl.replace(/\/api\/?$/, '');
+      }
+    }
+    return typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
+  };
+
+  const defaultApiBase = resolveDefaultApiBase();
+  const apiBase = customServerUrl.trim().replace(/\/+$/, '') || defaultApiBase;
 
   const cursorSnippet = `{
   "mcpServers": {
@@ -439,6 +459,60 @@ export default function SettingsModal({ isOpen, onClose }) {
                   >
                     cURL Test
                   </button>
+                </div>
+
+                {/* Target server URL indicator & customization */}
+                <div className="flex items-center justify-between gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[11px]">
+                  <div className="flex items-center gap-1.5 overflow-hidden flex-1 min-w-0">
+                    <span className="font-semibold text-slate-600 shrink-0">Endpoint Host:</span>
+                    {isEditingServerUrl ? (
+                      <input
+                        type="text"
+                        value={customServerUrl}
+                        onChange={(e) => setCustomServerUrl(e.target.value)}
+                        placeholder={defaultApiBase}
+                        className="font-mono text-[11px] bg-white border border-brand-300 rounded px-2 py-0.5 text-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-500 w-full max-w-xs"
+                      />
+                    ) : (
+                      <span className="font-mono text-slate-700 truncate" title={apiBase}>
+                        {apiBase}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {isEditingServerUrl ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCustomServerUrl('');
+                            setIsEditingServerUrl(false);
+                          }}
+                          className="text-[11px] text-slate-500 hover:text-slate-700 px-1.5 py-0.5"
+                        >
+                          Reset
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingServerUrl(false)}
+                          className="text-[11px] text-brand-600 font-semibold px-2 py-0.5 bg-brand-50 rounded"
+                        >
+                          Done
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!customServerUrl) setCustomServerUrl(defaultApiBase);
+                          setIsEditingServerUrl(true);
+                        }}
+                        className="text-[11px] text-brand-600 hover:text-brand-700 font-semibold hover:underline"
+                      >
+                        {customServerUrl ? 'Edit URL' : 'Change URL'}
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Code display */}
