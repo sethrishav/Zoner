@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api/client';
-import { Calendar, Bell, Search, Globe, LogOut, Check, Trash2, Clock, ChevronDown } from 'lucide-react';
+import { Calendar, Bell, Search, Globe, LogOut, Check, Trash2, Clock, ChevronDown, Key } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import SettingsModal from '../settings/SettingsModal';
 
 export default function Navbar({ onOpenSearch, onViewChange, currentView = 'timeGridWeek' }) {
   const { user, logout } = useAuth();
@@ -10,6 +11,7 @@ export default function Navbar({ onOpenSearch, onViewChange, currentView = 'time
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const notifRef = useRef(null);
   const profileRef = useRef(null);
 
@@ -250,10 +252,23 @@ export default function Navbar({ onOpenSearch, onViewChange, currentView = 'time
                 </div>
               </div>
 
+              <div className="py-1 border-b border-slate-100">
+                <button
+                  onClick={() => {
+                    setShowProfileMenu(false);
+                    setShowSettingsModal(true);
+                  }}
+                  className="w-full px-4 py-2 text-left text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors cursor-pointer"
+                >
+                  <Key className="w-3.5 h-3.5 text-brand-600" />
+                  <span>Settings & MCP</span>
+                </button>
+              </div>
+
               <div className="pt-1">
                 <button
                   onClick={logout}
-                  className="w-full px-4 py-2 text-left text-xs font-medium text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors"
+                  className="w-full px-4 py-2 text-left text-xs font-medium text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span>Sign out</span>
@@ -263,6 +278,12 @@ export default function Navbar({ onOpenSearch, onViewChange, currentView = 'time
           )}
         </div>
       </div>
+
+      {/* Settings & MCP Modal */}
+      <SettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+      />
     </header>
   );
 }

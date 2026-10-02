@@ -42,6 +42,10 @@ public class UserPrincipal implements UserDetails {
         return displayName;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
     public String getTimeZone() {
         return timeZone;
     }

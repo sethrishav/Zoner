@@ -235,4 +235,11 @@ export const api = {
     markAllAsRead: () => apiRequest('/notifications/mark-all-read', { method: 'POST' }),
     delete: (id) => apiRequest(`/notifications/${id}`, { method: 'DELETE' }),
   },
+
+  // Personal Access Tokens (PATs) for MCP
+  tokens: {
+    list: () => apiRequest('/tokens'),
+    create: (data) => apiRequest('/tokens', { method: 'POST', body: JSON.stringify(data) }),
+    revoke: (id) => apiRequest(`/tokens/${id}`, { method: 'DELETE' }),
+  },
 };
