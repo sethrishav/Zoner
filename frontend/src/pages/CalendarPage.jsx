@@ -1,30 +1,59 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import AppShell from '../components/layout/AppShell';
+import CalendarView from '../components/calendar/CalendarView';
+import EventModal from '../components/events/EventModal';
+import EventDetailModal from '../components/events/EventDetailModal';
+import RecurringChoiceModal from '../components/events/RecurringChoiceModal';
+import CreateCalendarModal from '../components/calendars/CreateCalendarModal';
+import ShareCalendarModal from '../components/calendars/ShareCalendarModal';
+import SearchModal from '../components/search/SearchModal';
 import { api } from '../api/client';
+import { getErrorMessage } from '../api/errors';
 import { useAuth } from '../context/AuthContext';
-import { Calendar as CalendarIcon, Plus, Users, Sparkles, Clock, Globe } from 'lucide-react';
-import { format } from 'date-fns';
+import { useToast } from '../context/ToastContext';
 
 export default function CalendarPage() {
   const { user } = useAuth();
+  const toast = useToast();
+
+  // Calendars
   const [calendars, setCalendars] = useState([]);
   const [selectedCalendarIds, setSelectedCalendarIds] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [isLoading, setIsLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Load calendars
+  // Modals state
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [editingEvent, setEditingEvent] = useState(null);
+  const [editMode, setEditMode] = useState('ALL');
+  const [occurrenceStart, setOccurrenceStart] = useState(null);
+
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [viewingEvent, setViewingEvent] = useState(null);
+
+  const [isRecurringChoiceOpen, setIsRecurringChoiceOpen] = useState(false);
+  const [recurringActionType, setRecurringActionType] = useState('edit'); // 'edit' or 'delete'
+  const [pendingRecurringEvent, setPendingRecurringEvent] = useState(null);
+
+  const [isCreateCalendarOpen, setIsCreateCalendarOpen] = useState(false);
+  const [isShareCalendarOpen, setIsShareCalendarOpen] = useState(false);
+  const [sharingCalendar, setSharingCalendar] = useState(null);
+
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  // Load user calendars
   const loadCalendars = useCallback(async () => {
     try {
-      setIsLoading(true);
       const data = await api.calendars.list();
       setCalendars(data);
-      // Select all enabled calendars by default
-      const enabledIds = data.filter((c) => c.enabled !== false).map((c) => c.id);
-      setSelectedCalendarIds(enabledIds);
+      // If none selected yet, default to all enabled calendars
+      setSelectedCalendarIds((prev) => {
+        if (prev.length > 0) return prev;
+        return data.filter((c) => c.enabled !== false).map((c) => c.id);
+      });
     } catch (err) {
       console.error('Failed to load calendars', err);
-    } finally {
-      setIsLoading(false);
     }
   }, []);
 
@@ -32,10 +61,97 @@ export default function CalendarPage() {
     loadCalendars();
   }, [loadCalendars]);
 
+  // Global keyboard shortcut for Search (⌘K / Ctrl+K)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const handleToggleCalendar = (id) => {
     setSelectedCalendarIds((prev) =>
       prev.includes(id) ? prev.filter((calId) => calId !== id) : [...prev, id]
     );
+  };
+
+  // Triggered when slot is clicked or dragged
+  const handleSelectSlot = (slotInfo) => {
+    setSelectedSlot(slotInfo.start);
+    setEditingEvent(null);
+    setEditMode('ALL');
+    setOccurrenceStart(null);
+    setIsEventModalOpen(true);
+  };
+
+  // Triggered when event is clicked
+  const handleSelectEvent = (eventData) => {
+    setViewingEvent(eventData);
+    setIsDetailModalOpen(true);
+  };
+
+  // Edit event clicked in detail modal
+  const handleRequestEdit = (eventData) => {
+    setIsDetailModalOpen(false);
+    if (eventData.recurrenceRule) {
+      setPendingRecurringEvent(eventData);
+      setRecurringActionType('edit');
+      setIsRecurringChoiceOpen(true);
+    } else {
+      setEditingEvent(eventData);
+      setEditMode('ALL');
+      setOccurrenceStart(null);
+      setIsEventModalOpen(true);
+    }
+  };
+
+  // Delete event clicked in detail modal
+  const handleRequestDelete = (eventData) => {
+    setIsDetailModalOpen(false);
+    if (eventData.recurrenceRule) {
+      setPendingRecurringEvent(eventData);
+      setRecurringActionType('delete');
+      setIsRecurringChoiceOpen(true);
+    } else {
+      executeDelete(eventData.id, 'ALL', null);
+    }
+  };
+
+  // Handle recurring mode confirmation (THIS, THIS_AND_FOLLOWING, ALL)
+  const handleRecurringChoiceConfirm = (mode) => {
+    setIsRecurringChoiceOpen(false);
+    const eventData = pendingRecurringEvent;
+    if (!eventData) return;
+
+    const occStart = eventData.start || eventData.startAt;
+
+    if (recurringActionType === 'delete') {
+      executeDelete(eventData.id, mode, occStart);
+    } else {
+      setEditingEvent(eventData);
+      setEditMode(mode);
+      setOccurrenceStart(occStart);
+      setIsEventModalOpen(true);
+    }
+  };
+
+  const executeDelete = async (eventId, mode, occStart) => {
+    try {
+      await api.events.delete(eventId, mode, occStart);
+      toast.success('Event deleted');
+      setRefreshTrigger((prev) => prev + 1);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  };
+
+  const handleOpenShare = (cal) => {
+    setSharingCalendar(cal);
+    setIsShareCalendarOpen(true);
   };
 
   return (
@@ -43,77 +159,83 @@ export default function CalendarPage() {
       calendars={calendars}
       selectedCalendarIds={selectedCalendarIds}
       onToggleCalendar={handleToggleCalendar}
-      onOpenCreateEvent={() => alert('Event creation modal will be wired in M7')}
-      onOpenCreateCalendar={() => alert('Calendar creation will be wired in M7')}
-      onOpenShareCalendar={(cal) => alert(`Share ${cal.name}`)}
-      onOpenSearch={() => alert('Search will be wired in M7')}
+      onOpenCreateEvent={() => {
+        setEditingEvent(null);
+        setSelectedSlot(new Date());
+        setIsEventModalOpen(true);
+      }}
+      onOpenCreateCalendar={() => setIsCreateCalendarOpen(true)}
+      onOpenShareCalendar={handleOpenShare}
+      onOpenSearch={() => setIsSearchOpen(true)}
       selectedDate={selectedDate}
       onSelectDate={setSelectedDate}
     >
-      <div className="h-full flex flex-col">
-        {/* Header with selected date banner and timezone badge */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-800">
-              {format(selectedDate, 'EEEE, MMMM d, yyyy')}
-            </h1>
-            <p className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
-              <Globe className="w-3.5 h-3.5 text-brand-600" />
-              <span>Viewing in {user?.timeZone || 'UTC'}</span>
-            </p>
-          </div>
+      <CalendarView
+        key={refreshTrigger}
+        calendars={calendars}
+        selectedCalendarIds={selectedCalendarIds}
+        selectedDate={selectedDate}
+        onSelectSlot={handleSelectSlot}
+        onSelectEvent={handleSelectEvent}
+        onEventModified={() => setRefreshTrigger((prev) => prev + 1)}
+      />
 
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-brand-50 text-brand-700 border border-brand-200/50">
-              <Sparkles className="w-3.5 h-3.5 text-brand-500" />
-              Milestone 6: Frontend Foundation Ready
-            </span>
-          </div>
-        </div>
+      {/* Event Create / Edit Modal */}
+      <EventModal
+        isOpen={isEventModalOpen}
+        onClose={() => setIsEventModalOpen(false)}
+        onSaved={() => setRefreshTrigger((prev) => prev + 1)}
+        calendars={calendars.filter((c) => c.isOwner || c.permission === 'EDIT')}
+        initialDate={selectedSlot}
+        event={editingEvent}
+        editMode={editMode}
+        occurrenceStart={occurrenceStart}
+      />
 
-        {/* Content Area / Empty Calendar Canvas */}
-        {isLoading ? (
-          <div className="flex-1 flex flex-col items-center justify-center">
-            <div className="w-8 h-8 border-3 border-brand-200 border-t-brand-600 rounded-full animate-spin"></div>
-            <p className="text-xs text-slate-400 mt-3 font-medium">Syncing calendars...</p>
-          </div>
-        ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-            <div className="w-16 h-16 bg-gradient-to-tr from-brand-100 to-indigo-50 border border-brand-200/60 rounded-2xl flex items-center justify-center shadow-inner mb-4">
-              <CalendarIcon className="w-8 h-8 text-brand-600" />
-            </div>
+      {/* Event Detail Modal */}
+      <EventDetailModal
+        isOpen={isDetailModalOpen}
+        event={viewingEvent}
+        calendar={calendars.find((c) => c.id === viewingEvent?.calendarId)}
+        onClose={() => setIsDetailModalOpen(false)}
+        onEdit={handleRequestEdit}
+        onDelete={handleRequestDelete}
+      />
 
-            <h2 className="text-lg font-semibold text-slate-800">
-              Welcome to your Zoner Calendar, {user?.displayName || 'there'}!
-            </h2>
-            <p className="max-w-md text-sm text-slate-500 mt-1.5">
-              Your default calendar <strong className="text-slate-700 font-medium">"{calendars.find(c => c.isDefault)?.name || 'Personal'}"</strong> is active and synced.
-            </p>
+      {/* Recurring Edit / Delete Mode Selection Dialog */}
+      <RecurringChoiceModal
+        isOpen={isRecurringChoiceOpen}
+        actionType={recurringActionType}
+        eventTitle={pendingRecurringEvent?.title}
+        onConfirm={handleRecurringChoiceConfirm}
+        onClose={() => setIsRecurringChoiceOpen(false)}
+      />
 
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-left max-w-xs">
-                <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                  <Clock className="w-4 h-4 text-brand-600" />
-                  Time-Zone Engine
-                </div>
-                <p className="text-xs text-slate-400 mt-1">
-                  Accurate across UTC instants and wall-clock times.
-                </p>
-              </div>
+      {/* Create Calendar Modal */}
+      <CreateCalendarModal
+        isOpen={isCreateCalendarOpen}
+        onClose={() => setIsCreateCalendarOpen(false)}
+        onCreated={loadCalendars}
+      />
 
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-left max-w-xs">
-                <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                  <Users className="w-4 h-4 text-emerald-600" />
-                  Sharing & Permissions
-                </div>
-                <p className="text-xs text-slate-400 mt-1">
-                  Enforces VIEW/EDIT with strict access policies.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Share Calendar Modal */}
+      <ShareCalendarModal
+        isOpen={isShareCalendarOpen}
+        calendar={sharingCalendar}
+        onClose={() => setIsShareCalendarOpen(false)}
+      />
+
+      {/* Global Search Modal */}
+      <SearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        calendars={calendars}
+        onSelectEvent={(evt) => {
+          setSelectedDate(new Date(evt.startAt));
+          setViewingEvent(evt);
+          setIsDetailModalOpen(true);
+        }}
+      />
     </AppShell>
   );
 }

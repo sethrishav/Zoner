@@ -1,0 +1,91 @@
+/* FullCalendar Modern Zoner Styling */
+.fc {
+  font-family: inherit;
+  --fc-border-color: #f1f5f9;
+  --fc-page-bg-color: #ffffff;
+  --fc-neutral-bg-color: #f8fafc;
+  --fc-today-bg-color: #f8fafc;
+  --fc-event-border-color: transparent;
+}
+
+.fc-theme-standard td, .fc-theme-standard th {
+  border-color: #f1f5f9;
+}
+
+.fc .fc-col-header-cell {
+  background-color: #ffffff;
+  padding: 8px 0;
+}
+
+.fc .fc-col-header-cell-cushion {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  text-decoration: none;
+}
+
+.fc-day-today .fc-col-header-cell-cushion {
+  color: #4f46e5;
+  font-weight: 700;
+}
+
+.fc .fc-timegrid-slot-label-cushion {
+  font-size: 10px;
+  font-weight: 500;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.fc .fc-timegrid-slot {
+  height: 48px;
+}
+
+.fc-timegrid-now-indicator-line {
+  border-color: #ef4444;
+  border-width: 2px;
+}
+
+.fc-timegrid-now-indicator-arrow {
+  border-color: #ef4444;
+}
+
+.fc-event {
+  border-radius: 6px !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08);
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  padding: 2px 4px !important;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.fc-event:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.12);
+}
+
+.fc-daygrid-day-number {
+  font-size: 12px;
+  font-weight: 500;
+  color: #475569;
+  text-decoration: none;
+  padding: 6px 8px !important;
+}
+
+.fc-day-today .fc-daygrid-day-number {
+  background-color: #4f46e5;
+  color: white;
+  border-radius: 9999px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 4px;
+}
+
+.fc-highlight {
+  background: rgba(99, 102, 241, 0.1) !important;
+}
