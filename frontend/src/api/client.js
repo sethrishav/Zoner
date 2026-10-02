@@ -174,7 +174,13 @@ export const api = {
 
   // Calendars
   calendars: {
-    list: () => apiRequest('/calendars'),
+    list: async () => {
+      const data = await apiRequest('/calendars');
+      return (data || []).map((c) => ({
+        ...c,
+        isOwner: c.permission === 'OWNER',
+      }));
+    },
     create: (calendar) => apiRequest('/calendars', { method: 'POST', body: JSON.stringify(calendar) }),
     get: (id) => apiRequest(`/calendars/${id}`),
     update: (id, calendar) => apiRequest(`/calendars/${id}`, { method: 'PUT', body: JSON.stringify(calendar) }),
@@ -209,13 +215,13 @@ export const api = {
       return apiRequest(`/events/${id}?${params.toString()}`, { method: 'DELETE' });
     },
     search: (query, from, to) => {
-      const params = new URLSearchParams({ query });
+      const params = new URLSearchParams({ q: query, query });
       if (from) params.append('from', from);
       if (to) params.append('to', to);
       return apiRequest(`/events/search?${params.toString()}`);
     },
     checkAvailability: (start, end, excludeEventId = null) => {
-      const params = new URLSearchParams({ start, end });
+      const params = new URLSearchParams({ start, end, from: start, to: end });
       if (excludeEventId) params.append('excludeEventId', excludeEventId);
       return apiRequest(`/events/availability?${params.toString()}`);
     },

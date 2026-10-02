@@ -277,6 +277,7 @@ export default function CalendarView({
           ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView="timeGridWeek"
+          timeZone="local"
           headerToolbar={false}
           allDaySlot={true}
           slotMinTime="06:00:00"
