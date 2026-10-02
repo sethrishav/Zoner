@@ -280,8 +280,9 @@ export default function CalendarView({
           timeZone="local"
           headerToolbar={false}
           allDaySlot={true}
-          slotMinTime="06:00:00"
-          slotMaxTime="23:00:00"
+          slotMinTime="00:00:00"
+          slotMaxTime="24:00:00"
+          scrollTime="07:00:00"
           nowIndicator={true}
           selectable={true}
           editable={true}
