@@ -24,14 +24,17 @@ public class AccessPolicy {
 
     private final CalendarRepository calendarRepository;
     private final CalendarShareRepository calendarShareRepository;
+    private final UserCalendarPrefRepository userCalendarPrefRepository;
 
     public record CalendarAccess(Calendar calendar, SharePermission permission) {}
 
     public AccessPolicy(
             CalendarRepository calendarRepository,
-            CalendarShareRepository calendarShareRepository) {
+            CalendarShareRepository calendarShareRepository,
+            UserCalendarPrefRepository userCalendarPrefRepository) {
         this.calendarRepository = calendarRepository;
         this.calendarShareRepository = calendarShareRepository;
+        this.userCalendarPrefRepository = userCalendarPrefRepository;
     }
 
     /**
@@ -71,5 +74,44 @@ public class AccessPolicy {
         }
 
         return access;
+    }
+
+    /**
+     * Returns all calendar IDs accessible to the user with at least the given permission.
+     */
+    public java.util.List<Long> getAccessibleCalendarIds(Long userId, SharePermission minimumRequired) {
+        java.util.List<Long> ids = new java.util.ArrayList<>();
+
+        // 1. Owned calendars (owner has full control)
+        for (Calendar c : calendarRepository.findAllByOwnerId(userId)) {
+            ids.add(c.getId());
+        }
+
+        // 2. Shared calendars
+        for (CalendarShare s : calendarShareRepository.findAllByUserIdWithCalendar(userId)) {
+            if (minimumRequired == SharePermission.VIEW || s.getPermission().canEditEvents()) {
+                ids.add(s.getCalendar().getId());
+            }
+        }
+
+        return ids;
+    }
+
+    /**
+     * Returns all calendar IDs accessible to the user that are currently enabled in their preferences.
+     */
+    public java.util.List<Long> getEnabledCalendarIds(Long userId) {
+        java.util.List<Long> accessibleIds = getAccessibleCalendarIds(userId, SharePermission.VIEW);
+        java.util.Map<Long, UserCalendarPref> prefMap = userCalendarPrefRepository.findAllByUserId(userId).stream()
+                .collect(java.util.stream.Collectors.toMap(p -> p.getCalendar().getId(), p -> p, (a, b) -> a));
+
+        java.util.List<Long> enabledIds = new java.util.ArrayList<>();
+        for (Long id : accessibleIds) {
+            UserCalendarPref pref = prefMap.get(id);
+            if (pref == null || pref.isEnabled()) {
+                enabledIds.add(id);
+            }
+        }
+        return enabledIds;
     }
 }
