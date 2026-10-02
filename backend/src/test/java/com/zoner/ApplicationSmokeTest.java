@@ -67,7 +67,7 @@ class ApplicationSmokeTest {
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Request-Id", "smoke-test-0001");
         ResponseEntity<Map> response = rest.exchange(
-                "/api/does-not-exist", HttpMethod.GET, new HttpEntity<>(headers), Map.class);
+                "/does-not-exist", HttpMethod.GET, new HttpEntity<>(headers), Map.class);
 
         assertThat(response.getStatusCode().value()).isEqualTo(404);
         assertThat(response.getHeaders().getFirst("X-Request-Id")).isEqualTo("smoke-test-0001");
