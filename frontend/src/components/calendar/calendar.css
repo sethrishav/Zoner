@@ -6,6 +6,7 @@
   --fc-neutral-bg-color: #f8fafc;
   --fc-today-bg-color: #f8fafc;
   --fc-event-border-color: transparent;
+  --fc-now-indicator-color: #ef4444;
 }
 
 .fc-theme-standard td, .fc-theme-standard th {
@@ -42,13 +43,94 @@
   height: 48px;
 }
 
-.fc-timegrid-now-indicator-line {
-  border-color: #ef4444;
-  border-width: 2px;
+/* Now Indicator (Current Time Red Line & Arrow) - Always on TOP of all events and grid slots */
+.fc .fc-timegrid-now-indicator-container {
+  z-index: 30 !important;
+  pointer-events: none !important;
+  overflow: visible !important;
 }
 
-.fc-timegrid-now-indicator-arrow {
-  border-color: #ef4444;
+.fc .fc-timegrid-now-indicator-line {
+  border-color: #ef4444 !important;
+  border-top-width: 2px !important;
+  border-bottom-width: 0 !important;
+  border-style: solid !important;
+  margin-top: -1px !important;
+  z-index: 35 !important;
+  pointer-events: none !important;
+  box-shadow: 0 0 5px rgba(239, 68, 68, 0.45);
+}
+
+/* Week View: Stretch the current-time line across all 7 columns based on which day is today */
+.fc-timeGridWeek-view .fc-timegrid-col.fc-day-today .fc-timegrid-now-indicator-line {
+  width: calc(700% + 2px) !important;
+  right: auto !important;
+}
+
+.fc-timeGridWeek-view .fc-timegrid-col.fc-day-sun.fc-day-today .fc-timegrid-now-indicator-line,
+.fc-timeGridWeek-view .fc-timegrid-col.fc-day-today:nth-child(1) .fc-timegrid-now-indicator-line {
+  left: 0 !important;
+}
+
+.fc-timeGridWeek-view .fc-timegrid-col.fc-day-mon.fc-day-today .fc-timegrid-now-indicator-line,
+.fc-timeGridWeek-view .fc-timegrid-col.fc-day-today:nth-child(2) .fc-timegrid-now-indicator-line {
+  left: -100% !important;
+}
+
+.fc-timeGridWeek-view .fc-timegrid-col.fc-day-tue.fc-day-today .fc-timegrid-now-indicator-line,
+.fc-timeGridWeek-view .fc-timegrid-col.fc-day-today:nth-child(3) .fc-timegrid-now-indicator-line {
+  left: -200% !important;
+}
+
+.fc-timeGridWeek-view .fc-timegrid-col.fc-day-wed.fc-day-today .fc-timegrid-now-indicator-line,
+.fc-timeGridWeek-view .fc-timegrid-col.fc-day-today:nth-child(4) .fc-timegrid-now-indicator-line {
+  left: -300% !important;
+}
+
+.fc-timeGridWeek-view .fc-timegrid-col.fc-day-thu.fc-day-today .fc-timegrid-now-indicator-line,
+.fc-timeGridWeek-view .fc-timegrid-col.fc-day-today:nth-child(5) .fc-timegrid-now-indicator-line {
+  left: -400% !important;
+}
+
+.fc-timeGridWeek-view .fc-timegrid-col.fc-day-fri.fc-day-today .fc-timegrid-now-indicator-line,
+.fc-timeGridWeek-view .fc-timegrid-col.fc-day-today:nth-child(6) .fc-timegrid-now-indicator-line {
+  left: -500% !important;
+}
+
+.fc-timeGridWeek-view .fc-timegrid-col.fc-day-sat.fc-day-today .fc-timegrid-now-indicator-line,
+.fc-timeGridWeek-view .fc-timegrid-col.fc-day-today:nth-child(7) .fc-timegrid-now-indicator-line {
+  left: -600% !important;
+}
+
+/* Day View: Fill entire single day column */
+.fc-timeGridDay-view .fc-timegrid-col.fc-day-today .fc-timegrid-now-indicator-line {
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+}
+
+/* Red bullet indicator at the beginning of the timeline (meeting the axis arrow) */
+.fc .fc-timegrid-now-indicator-line::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: -4px;
+  width: 8px;
+  height: 8px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35);
+  z-index: 36 !important;
+}
+
+.fc .fc-timegrid-now-indicator-arrow {
+  border-color: #ef4444 !important;
+  border-top-color: transparent !important;
+  border-bottom-color: transparent !important;
+  border-width: 5px 0 5px 6px !important;
+  border-style: solid !important;
+  z-index: 36 !important;
+  pointer-events: none !important;
 }
 
 .fc-event {
