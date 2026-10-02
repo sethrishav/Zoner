@@ -313,7 +313,7 @@ export default function EventModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Add event title..."
-              className="w-full text-lg font-bold text-slate-900 placeholder-slate-400 border-0 border-b-2 border-slate-100 pb-2.5 focus:ring-0 focus:border-brand-600 transition-colors bg-transparent"
+              className="w-full text-lg pl-2 pt-2 font-bold text-slate-900 placeholder-slate-400 border-0 border-b-2 border-slate-100 pb-2.5 focus:ring-0 focus:border-brand-600 transition-colors bg-transparent"
             />
           </div>
 
