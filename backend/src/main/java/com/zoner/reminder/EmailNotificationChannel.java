@@ -25,13 +25,18 @@ public class EmailNotificationChannel implements NotificationChannel {
 
     @Override
     public void send(User recipient, Event event, Instant occurrenceStart, String title, String message) {
-        log.info("[EMAIL STUB] Sending email reminder to '{}' <{}>: {} - {}",
-                recipient.getDisplayName(), recipient.getEmail(), title, message);
+        log.info("[NOTIFICATION EVENT] [EMAIL CHANNEL] Dispatching email to recipient='{}' <{}> for eventId={}, eventTitle='{}', title='{}', message='{}'",
+                recipient.getDisplayName(), recipient.getEmail(),
+                event != null ? event.getId() : null,
+                event != null ? event.getTitle() : "N/A",
+                title, message);
         try {
             Notification notification = new Notification(recipient, event, occurrenceStart, title, message);
-            notificationRepository.saveAndFlush(notification);
+            Notification saved = notificationRepository.saveAndFlush(notification);
+            log.info("[NOTIFICATION EVENT] In-app fallback notification ID={} saved for email recipient='{}' <{}>",
+                    saved.getId(), recipient.getDisplayName(), recipient.getEmail());
         } catch (Exception e) {
-            log.warn("Could not persist in-app notification copy for email reminder: {}", e.getMessage());
+            log.warn("[EMAIL CHANNEL] Could not persist in-app notification copy for email reminder: {}", e.getMessage());
         }
     }
 }

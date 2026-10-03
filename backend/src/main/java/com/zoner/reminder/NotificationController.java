@@ -28,6 +28,8 @@ import org.springframework.web.bind.annotation.RestController;
 @SecurityRequirement(name = "bearerAuth")
 public class NotificationController {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(NotificationController.class);
+
     private final NotificationService notificationService;
     private final ReminderDispatcher reminderDispatcher;
     private final ReminderDispatchRepository reminderDispatchRepository;
@@ -49,14 +51,19 @@ public class NotificationController {
     public ResponseEntity<Map<String, Object>> triggerDispatch(
             @RequestParam(value = "resetDispatches", defaultValue = "false") boolean resetDispatches,
             @RequestParam(value = "reminderId", required = false) Long reminderId) {
+        log.info("[NOTIFICATION API] Manual reminder dispatch requested: resetDispatches={}, reminderId={}, timestamp={}",
+                resetDispatches, reminderId, clock.instant());
         if (resetDispatches) {
             if (reminderId != null) {
+                log.info("[NOTIFICATION API] Purging dispatch records for reminderId={}", reminderId);
                 reminderDispatchRepository.deleteByReminderId(reminderId);
             } else {
+                log.info("[NOTIFICATION API] Purging all dispatch records across all reminders");
                 reminderDispatchRepository.deleteAll();
             }
         }
         int count = reminderDispatcher.dispatchDueReminders(clock.instant());
+        log.info("[NOTIFICATION API] Manual reminder dispatch completed: {} reminder(s) dispatched", count);
         return ResponseEntity.ok(Map.of(
                 "dispatchedCount", count,
                 "timestamp", clock.instant().toString(),

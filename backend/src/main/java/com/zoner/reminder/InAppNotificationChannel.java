@@ -27,7 +27,10 @@ public class InAppNotificationChannel implements NotificationChannel {
     public void send(User recipient, Event event, Instant occurrenceStart, String title, String message) {
         Notification notification = new Notification(recipient, event, occurrenceStart, title, message);
         Notification saved = notificationRepository.saveAndFlush(notification);
-        log.info("Successfully created in-app notification ID={} for user ID={} (event ID={})",
-                saved.getId(), recipient.getId(), event != null ? event.getId() : null);
+        log.info("[NOTIFICATION EVENT] In-app notification created successfully: notificationId={}, recipientId={}, recipientEmail='{}', eventId={}, eventTitle='{}', occStart='{}', title='{}'",
+                saved.getId(), recipient.getId(), recipient.getEmail(),
+                event != null ? event.getId() : null,
+                event != null ? event.getTitle() : "N/A",
+                occurrenceStart, title);
     }
 }

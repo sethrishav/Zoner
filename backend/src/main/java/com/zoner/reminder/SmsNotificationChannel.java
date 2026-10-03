@@ -25,13 +25,18 @@ public class SmsNotificationChannel implements NotificationChannel {
 
     @Override
     public void send(User recipient, Event event, Instant occurrenceStart, String title, String message) {
-        log.info("[SMS STUB] Sending SMS reminder to '{}': {} - {}",
-                recipient.getDisplayName(), title, message);
+        log.info("[NOTIFICATION EVENT] [SMS CHANNEL] Dispatching SMS to recipient='{}' <{}> for eventId={}, eventTitle='{}', title='{}', message='{}'",
+                recipient.getDisplayName(), recipient.getEmail(),
+                event != null ? event.getId() : null,
+                event != null ? event.getTitle() : "N/A",
+                title, message);
         try {
             Notification notification = new Notification(recipient, event, occurrenceStart, title, message);
-            notificationRepository.saveAndFlush(notification);
+            Notification saved = notificationRepository.saveAndFlush(notification);
+            log.info("[NOTIFICATION EVENT] In-app fallback notification ID={} saved for SMS recipient='{}' <{}>",
+                    saved.getId(), recipient.getDisplayName(), recipient.getEmail());
         } catch (Exception e) {
-            log.warn("Could not persist in-app notification copy for SMS reminder: {}", e.getMessage());
+            log.warn("[SMS CHANNEL] Could not persist in-app notification copy for SMS reminder: {}", e.getMessage());
         }
     }
 }

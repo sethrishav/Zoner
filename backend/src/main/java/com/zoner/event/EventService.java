@@ -22,12 +22,16 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class EventService {
+
+    private static final Logger log = LoggerFactory.getLogger(EventService.class);
 
     private final EventRepository eventRepository;
     private final EventExceptionRepository eventExceptionRepository;
@@ -99,6 +103,10 @@ public class EventService {
         }
 
         Event saved = eventRepository.save(event);
+        log.info("[EVENT CREATED] eventId={}, title='{}', startAt={}, remindersCount={}, reminders={}",
+                saved.getId(), saved.getTitle(), saved.getStartAt(),
+                saved.getReminders().size(),
+                saved.getReminders().stream().map(r -> r.getMinutesBefore() + "m (" + r.getChannel() + ")").toList());
         return EventResponse.from(saved);
     }
 
@@ -261,6 +269,10 @@ public class EventService {
         }
 
         Event saved = eventRepository.saveAndFlush(event);
+        log.info("[EVENT UPDATED] eventId={}, title='{}', startAt={}, remindersCount={}, reminders={}",
+                saved.getId(), saved.getTitle(), saved.getStartAt(),
+                saved.getReminders().size(),
+                saved.getReminders().stream().map(r -> r.getMinutesBefore() + "m (" + r.getChannel() + ")").toList());
         return EventResponse.from(saved);
     }
 
