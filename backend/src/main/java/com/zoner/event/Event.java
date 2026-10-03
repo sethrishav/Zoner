@@ -82,6 +82,9 @@ public class Event {
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Reminder> reminders = new ArrayList<>();
 
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<EventAttendee> attendees = new ArrayList<>();
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -138,6 +141,23 @@ public class Event {
 
     public void clearReminders() {
         this.reminders.clear();
+    }
+
+    public void addAttendee(String email, String displayName, AttendeeStatus status) {
+        EventAttendee attendee = new EventAttendee(this, email, displayName, status);
+        this.attendees.add(attendee);
+    }
+
+    public void clearAttendees() {
+        this.attendees.clear();
+    }
+
+    public List<EventAttendee> getAttendees() {
+        return attendees;
+    }
+
+    public void setAttendees(List<EventAttendee> attendees) {
+        this.attendees = attendees;
     }
 
     // Getters and Setters

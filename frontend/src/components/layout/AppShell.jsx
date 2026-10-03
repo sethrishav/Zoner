@@ -18,7 +18,7 @@ export default function AppShell({
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
       <Navbar
         onOpenSearch={onOpenSearch}
         onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
@@ -49,7 +49,7 @@ export default function AppShell({
             />
 
             {/* Drawer Container */}
-            <div className="fixed inset-y-0 left-0 max-w-xs w-full bg-white shadow-2xl z-50 flex flex-col animate-in slide-in-from-left duration-200">
+            <div className="fixed inset-y-0 left-0 max-w-xs w-full bg-white dark:bg-slate-900 shadow-2xl z-50 flex flex-col animate-in slide-in-from-left duration-200">
               <Sidebar
                 calendars={calendars}
                 selectedCalendarIds={selectedCalendarIds}
@@ -78,7 +78,7 @@ export default function AppShell({
           </div>
         )}
 
-        <main className="flex-1 overflow-y-auto bg-white p-2 sm:p-6 min-w-0">
+        <main className="flex-1 overflow-y-auto bg-white dark:bg-slate-900 p-2 sm:p-6 min-w-0">
           {children}
         </main>
       </div>

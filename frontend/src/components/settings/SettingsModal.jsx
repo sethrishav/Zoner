@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { api } from '../../api/client';
 import { useToast } from '../../context/ToastContext';
 import { getErrorMessage } from '../../api/errors';
@@ -16,6 +17,8 @@ import {
   ShieldCheck,
   AlertCircle,
   ExternalLink,
+  Sun,
+  Moon,
 } from 'lucide-react';
 
 const COMMON_TIMEZONES = [
@@ -36,6 +39,7 @@ const COMMON_TIMEZONES = [
 
 export default function SettingsModal({ isOpen, onClose }) {
   const { user, updateUser } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const toast = useToast();
 
   const [activeTab, setActiveTab] = useState('mcp'); // 'mcp' | 'profile'
@@ -208,34 +212,34 @@ export default function SettingsModal({ isOpen, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-100">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full border border-slate-100 flex flex-col max-h-[90vh]">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-2xl w-full border border-slate-100 dark:border-slate-800 flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-100">
+        <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-brand-50 border border-brand-200/60 flex items-center justify-center text-brand-600">
+            <div className="w-8 h-8 rounded-lg bg-brand-50 dark:bg-brand-950/60 border border-brand-200/60 dark:border-brand-800/60 flex items-center justify-center text-brand-600 dark:text-brand-400">
               <Cpu className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="font-bold text-base text-slate-900">Settings & AI Integrations</h3>
-              <p className="text-xs text-slate-500">Manage Model Context Protocol (MCP) access and preferences</p>
+              <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">Settings & AI Integrations</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Manage Model Context Protocol (MCP) access and preferences</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-50 transition-colors"
+            className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-4 px-6 pt-3 border-b border-slate-100 text-xs font-semibold">
+        <div className="flex items-center gap-4 px-6 pt-3 border-b border-slate-100 dark:border-slate-800 text-xs font-semibold">
           <button
             onClick={() => setActiveTab('mcp')}
             className={`pb-3 flex items-center gap-2 border-b-2 transition-all cursor-pointer ${
               activeTab === 'mcp'
-                ? 'border-brand-600 text-brand-600'
-                : 'border-transparent text-slate-400 hover:text-slate-700'
+                ? 'border-brand-600 dark:border-brand-400 text-brand-600 dark:text-brand-400'
+                : 'border-transparent text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
           >
             <Key className="w-3.5 h-3.5" />
@@ -245,12 +249,12 @@ export default function SettingsModal({ isOpen, onClose }) {
             onClick={() => setActiveTab('profile')}
             className={`pb-3 flex items-center gap-2 border-b-2 transition-all cursor-pointer ${
               activeTab === 'profile'
-                ? 'border-brand-600 text-brand-600'
-                : 'border-transparent text-slate-400 hover:text-slate-700'
+                ? 'border-brand-600 dark:border-brand-400 text-brand-600 dark:text-brand-400'
+                : 'border-transparent text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
           >
             <Globe className="w-3.5 h-3.5" />
-            Profile & Timezone
+            Profile & Appearance
           </button>
         </div>
 
@@ -548,10 +552,10 @@ export default function SettingsModal({ isOpen, onClose }) {
               </div>
             </div>
           ) : (
-            /* Profile & Timezone Tab */
+            /* Profile & Appearance Tab */
             <form onSubmit={handleSaveProfile} className="space-y-4 max-w-md">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
                   Display Name
                 </label>
                 <input
@@ -559,33 +563,65 @@ export default function SettingsModal({ isOpen, onClose }) {
                   required
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full text-xs font-medium rounded-xl border border-slate-200 bg-white py-2 px-3 text-slate-800 focus:outline-none focus:border-brand-500 shadow-2xs"
+                  className="w-full text-xs font-medium rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-brand-500 shadow-2xs"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
                   Email Address
                 </label>
                 <input
                   type="email"
                   disabled
                   value={user?.email || ''}
-                  className="w-full text-xs font-medium rounded-xl border border-slate-200 bg-slate-100 py-2 px-3 text-slate-500 cursor-not-allowed"
+                  className="w-full text-xs font-medium rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/60 py-2 px-3 text-slate-500 dark:text-slate-400 cursor-not-allowed"
                 />
-                <span className="text-[10px] text-slate-400 mt-1 block">
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 block">
                   Email address cannot be changed.
                 </span>
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                  Appearance Theme
+                </label>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => theme !== 'light' && toggleTheme()}
+                    className={`flex-1 py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      theme === 'light'
+                        ? 'border-brand-500 bg-brand-50 text-brand-700 ring-1 ring-brand-500 shadow-xs'
+                        : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <Sun className="w-4 h-4 text-amber-500" />
+                    <span>Light Mode</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => theme !== 'dark' && toggleTheme()}
+                    className={`flex-1 py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      theme === 'dark'
+                        ? 'border-brand-500 bg-brand-950/60 text-brand-300 ring-1 ring-brand-500 shadow-xs'
+                        : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <Moon className="w-4 h-4 text-indigo-400" />
+                    <span>Dark Mode</span>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
                   IANA Primary Time Zone
                 </label>
                 <select
                   value={timeZone}
                   onChange={(e) => setTimeZone(e.target.value)}
-                  className="w-full text-xs font-medium rounded-xl border border-slate-200 bg-white py-2 px-3 text-slate-800 focus:outline-none focus:border-brand-500 shadow-2xs cursor-pointer"
+                  className="w-full text-xs font-medium rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-brand-500 shadow-2xs cursor-pointer"
                 >
                   {COMMON_TIMEZONES.map((tz) => (
                     <option key={tz} value={tz}>
@@ -593,7 +629,7 @@ export default function SettingsModal({ isOpen, onClose }) {
                     </option>
                   ))}
                 </select>
-                <span className="text-[10px] text-slate-400 mt-1 block">
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 block">
                   Used by MCP AI tools and reminder notifications to interpret local event times.
                 </span>
               </div>

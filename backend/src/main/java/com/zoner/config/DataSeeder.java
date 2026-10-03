@@ -8,6 +8,7 @@ import com.zoner.calendar.CalendarDto;
 import com.zoner.calendar.CalendarRepository;
 import com.zoner.calendar.CalendarService;
 import com.zoner.calendar.SharePermission;
+import com.zoner.event.AttendeeStatus;
 import com.zoner.event.EventDto;
 import com.zoner.event.EventService;
 import com.zoner.event.ReminderChannel;
@@ -120,7 +121,12 @@ public class DataSeeder implements CommandLineRunner {
                     tomorrow2pm.plus(1, ChronoUnit.HOURS),
                     "America/New_York",
                     null,
-                    List.of(new EventDto.ReminderDto(null, 15, ReminderChannel.IN_APP))
+                    List.of(new EventDto.ReminderDto(null, 15, ReminderChannel.IN_APP)),
+                    List.of(
+                            new EventDto.AttendeeDto(null, "demo@zoner.app", "Demo Reviewer", AttendeeStatus.ACCEPTED),
+                            new EventDto.AttendeeDto(null, "colleague@zoner.app", "Alex Rivera", AttendeeStatus.PENDING),
+                            new EventDto.AttendeeDto(null, "lead-architect@zoner.app", "Lead Architect", AttendeeStatus.ACCEPTED)
+                    )
             ));
 
             // Event B: Recurring Weekly Engineering Standup (Every Mon, Wed, Fri)

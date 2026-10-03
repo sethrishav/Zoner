@@ -200,6 +200,7 @@ export default function CalendarPage() {
         onClose={() => setIsDetailModalOpen(false)}
         onEdit={handleRequestEdit}
         onDelete={handleRequestDelete}
+        onRsvpSuccess={() => setRefreshTrigger((prev) => prev + 1)}
       />
 
       {/* Recurring Edit / Delete Mode Selection Dialog */}

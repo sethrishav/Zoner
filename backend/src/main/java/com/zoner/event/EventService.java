@@ -90,6 +90,14 @@ public class EventService {
             }
         }
 
+        if (request.attendees() != null) {
+            for (EventDto.AttendeeDto a : request.attendees()) {
+                if (a.email() != null && !a.email().isBlank()) {
+                    event.addAttendee(a.email(), a.displayName(), a.status());
+                }
+            }
+        }
+
         Event saved = eventRepository.save(event);
         return EventResponse.from(saved);
     }
@@ -243,6 +251,15 @@ public class EventService {
             }
         }
 
+        if (request.attendees() != null) {
+            event.clearAttendees();
+            for (EventDto.AttendeeDto a : request.attendees()) {
+                if (a.email() != null && !a.email().isBlank()) {
+                    event.addAttendee(a.email(), a.displayName(), a.status());
+                }
+            }
+        }
+
         Event saved = eventRepository.saveAndFlush(event);
         return EventResponse.from(saved);
     }
@@ -383,6 +400,43 @@ public class EventService {
             results = eventRepository.searchEvents(accessibleIds, query.trim(), pageable);
         }
         return results.stream().map(EventResponse::from).toList();
+    }
+
+    @Transactional
+    public EventResponse rsvpEvent(Long userId, Long eventId, AttendeeStatus status) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event not found."));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found."));
+
+        boolean hasCalendarAccess = false;
+        try {
+            accessPolicy.requireAccess(userId, event.getCalendar().getId(), SharePermission.VIEW);
+            hasCalendarAccess = true;
+        } catch (Exception ignored) {}
+
+        String userEmail = user.getEmail().trim().toLowerCase();
+        EventAttendee existingAttendee = event.getAttendees().stream()
+                .filter(a -> a.getEmail().equalsIgnoreCase(userEmail))
+                .findFirst()
+                .orElse(null);
+
+        if (!hasCalendarAccess && existingAttendee == null) {
+            throw new NotFoundException("Event not found.");
+        }
+
+        if (existingAttendee != null) {
+            existingAttendee.setStatus(status);
+            if (existingAttendee.getDisplayName() == null || existingAttendee.getDisplayName().isBlank()) {
+                existingAttendee.setDisplayName(user.getDisplayName());
+            }
+        } else {
+            event.addAttendee(userEmail, user.getDisplayName(), status);
+        }
+
+        Event saved = eventRepository.saveAndFlush(event);
+        return EventResponse.from(saved);
     }
 
     private void validateTimeZone(String timeZone) {

@@ -231,3 +231,57 @@
     margin: 2px;
   }
 }
+
+/* Dark Mode FullCalendar Support */
+.dark .fc {
+  --fc-border-color: #1e293b;
+  --fc-page-bg-color: #0f172a;
+  --fc-neutral-bg-color: #1e293b;
+  --fc-today-bg-color: #1e293b/40;
+}
+
+.dark .fc-theme-standard td,
+.dark .fc-theme-standard th {
+  border-color: #1e293b !important;
+}
+
+.dark .fc .fc-col-header-cell {
+  background-color: #0f172a !important;
+}
+
+.dark .fc .fc-col-header-cell-cushion {
+  color: #94a3b8 !important;
+}
+
+.dark .fc-day-today .fc-col-header-cell-cushion {
+  color: #818cf8 !important;
+}
+
+.dark .fc .fc-timegrid-slot-label-cushion {
+  color: #64748b !important;
+}
+
+.dark .fc .fc-timegrid-axis-cushion {
+  color: #64748b !important;
+}
+
+.dark .fc-daygrid-day-number {
+  color: #cbd5e1 !important;
+}
+
+.dark .fc-highlight {
+  background: rgba(99, 102, 241, 0.25) !important;
+}
+
+.dark .fc .fc-scrollgrid-section > * {
+  border-color: #1e293b !important;
+}
+
+.dark .fc .fc-timegrid-divider {
+  border-color: #334155 !important;
+}
+
+.dark .fc-theme-standard .fc-scrollgrid {
+  border-color: #1e293b !important;
+}
+

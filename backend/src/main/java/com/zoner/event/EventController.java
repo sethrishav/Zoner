@@ -68,6 +68,16 @@ public class EventController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/{id}/rsvp")
+    @Operation(summary = "Respond to event RSVP (ACCEPTED, DECLINED, TENTATIVE)")
+    public ResponseEntity<EventResponse> rsvpEvent(
+            @CurrentUser UserPrincipal principal,
+            @PathVariable Long id,
+            @Valid @RequestBody EventDto.RsvpRequest request) {
+        EventResponse response = eventService.rsvpEvent(principal.getId(), id, request.status());
+        return ResponseEntity.ok(response);
+    }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete an event or recurrence occurrence (requires EDIT permission)")

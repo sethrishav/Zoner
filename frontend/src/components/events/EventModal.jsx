@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../../api/client';
 import { getErrorMessage } from '../../api/errors';
 import { useToast } from '../../context/ToastContext';
-import { X, Calendar, Clock, MapPin, AlignLeft, RefreshCw, Bell, AlertTriangle, Trash2, Plus, ChevronDown, Mail, Smartphone } from 'lucide-react';
+import { X, Calendar, Clock, MapPin, AlignLeft, RefreshCw, Bell, AlertTriangle, Trash2, Plus, ChevronDown, Mail, Smartphone, Users } from 'lucide-react';
 import { format, parseISO, addHours } from 'date-fns';
 import CustomSelect from '../common/CustomSelect';
 
@@ -56,6 +56,8 @@ export default function EventModal({
   const [recurrenceFreq, setRecurrenceFreq] = useState('NONE');
   const [recurrenceUntil, setRecurrenceUntil] = useState('');
   const [reminders, setReminders] = useState([{ minutesBefore: 15, channel: 'IN_APP' }]);
+  const [attendees, setAttendees] = useState([]);
+  const [attendeeEmailInput, setAttendeeEmailInput] = useState('');
   
   const [conflicts, setConflicts] = useState([]);
   const [isCheckingConflicts, setIsCheckingConflicts] = useState(false);
@@ -96,11 +98,16 @@ export default function EventModal({
         event.recurrenceUntil ? format(new Date(event.recurrenceUntil), 'yyyy-MM-dd') : ''
       );
 
-      if (event.reminders && event.reminders.length > 0) {
-        setReminders(event.reminders);
+      if (event.attendees && Array.isArray(event.attendees)) {
+        setAttendees(event.attendees.map((a) => ({
+          email: a.email,
+          displayName: a.displayName || '',
+          status: a.status || 'PENDING',
+        })));
       } else {
-        setReminders([{ minutesBefore: 15, channel: 'IN_APP' }]);
+        setAttendees([]);
       }
+      setAttendeeEmailInput('');
     } else {
       // New event
       const baseStart = initialDate?.start
@@ -126,10 +133,36 @@ export default function EventModal({
       setRecurrenceFreq('NONE');
       setRecurrenceUntil('');
       setReminders([{ minutesBefore: 15, channel: 'IN_APP' }]);
+      setAttendees([]);
+      setAttendeeEmailInput('');
     }
     setError('');
     setConflicts([]);
   }, [isOpen, event, initialDate, defaultCal]);
+
+  const handleAddAttendee = (e) => {
+    if (e) e.preventDefault();
+    const cleanEmail = attendeeEmailInput.trim().toLowerCase();
+    if (!cleanEmail) return;
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    if (attendees.some((a) => a.email.toLowerCase() === cleanEmail)) {
+      toast.info('Attendee already added');
+      return;
+    }
+
+    setAttendees([...attendees, { email: cleanEmail, status: 'PENDING' }]);
+    setAttendeeEmailInput('');
+  };
+
+  const handleRemoveAttendee = (emailToRemove) => {
+    setAttendees(attendees.filter((a) => a.email.toLowerCase() !== emailToRemove.toLowerCase()));
+  };
 
   // Fallback to guarantee a calendar is selected if calendars load after modal opens
   useEffect(() => {
@@ -238,6 +271,11 @@ export default function EventModal({
       recurrenceUntil: untilInstant,
       version: event?.version,
       reminders: reminders.filter((r) => r.minutesBefore > 0),
+      attendees: attendees.map((a) => ({
+        email: a.email,
+        displayName: a.displayName || null,
+        status: a.status || 'PENDING',
+      })),
     };
 
     try {
@@ -263,21 +301,21 @@ export default function EventModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-100">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full border border-slate-100 flex flex-col max-h-[90vh]">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-lg w-full border border-slate-100 dark:border-slate-800 flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-100">
+        <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2.5">
             <div
-              className="w-3.5 h-3.5 rounded-full ring-2 ring-white shadow-xs"
+              className="w-3.5 h-3.5 rounded-full ring-2 ring-white dark:ring-slate-700 shadow-xs"
               style={{ backgroundColor: color }}
             />
-            <h3 className="font-semibold text-base text-slate-800">
+            <h3 className="font-semibold text-base text-slate-800 dark:text-slate-100">
               {isEditing ? 'Edit Event' : 'Create New Event'}
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-50 transition-colors"
+            className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -286,19 +324,19 @@ export default function EventModal({
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-5 flex-1">
           {error && (
-            <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-start gap-2.5">
-              <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+            <div className="p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-xl text-xs text-rose-800 dark:text-rose-200 flex items-start gap-2.5">
+              <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" />
               <span className="leading-relaxed">{error}</span>
             </div>
           )}
 
           {/* Conflict Warning Banner */}
           {conflicts.length > 0 && (
-            <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-start gap-2.5">
-              <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2.5">
+              <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="font-semibold">Scheduling conflict detected:</p>
-                <p className="mt-0.5 text-amber-700">
+                <p className="mt-0.5 text-amber-700 dark:text-amber-300">
                   Overlaps with: {conflicts.map((c) => c.title).join(', ')}
                 </p>
               </div>
@@ -314,14 +352,15 @@ export default function EventModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Add event title..."
-              className="w-full text-lg pl-2 pt-2 font-bold text-slate-900 placeholder-slate-400 border-0 border-b-2 border-slate-100 pb-2.5 focus:ring-0 focus:border-brand-600 transition-colors bg-transparent"
+              className="w-full text-lg pl-2 pt-2 font-bold text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 border-0 border-b-2 border-slate-100 dark:border-slate-800 pb-2.5 focus:ring-0 focus:border-brand-600 dark:focus:border-brand-500 transition-colors bg-transparent"
             />
           </div>
 
           {/* Calendar Picker & Color */}
+          {/* Calendar Picker & Color */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
                 Calendar
               </label>
               <CustomSelect
@@ -343,7 +382,7 @@ export default function EventModal({
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
                 Event Color
               </label>
               <div className="flex items-center gap-2 py-1.5">
@@ -354,7 +393,7 @@ export default function EventModal({
                     onClick={() => setColor(c)}
                     className={`w-6 h-6 rounded-full transition-all relative flex items-center justify-center ${
                       color === c
-                        ? 'scale-115 ring-2 ring-brand-500 ring-offset-2 shadow-sm'
+                        ? 'scale-115 ring-2 ring-brand-500 ring-offset-2 dark:ring-offset-slate-900 shadow-sm'
                         : 'hover:scale-108 opacity-85 hover:opacity-100'
                     }`}
                     style={{ backgroundColor: c }}
@@ -371,32 +410,32 @@ export default function EventModal({
           {/* Date & Time */}
           <div className="space-y-2.5 pt-1">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-brand-600" />
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
                 Time & Date
               </span>
-              <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-600 select-none">
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-600 dark:text-slate-300 select-none">
                 <input
                   type="checkbox"
                   checked={allDay}
                   onChange={(e) => setAllDay(e.target.checked)}
-                  className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                  className="rounded border-slate-300 dark:border-slate-600 text-brand-600 focus:ring-brand-500 bg-white dark:bg-slate-800"
                 />
                 All day
               </label>
             </div>
 
-            <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-3.5 space-y-2.5">
+            <div className="bg-slate-50/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-3.5 space-y-2.5">
               {/* Starts row */}
               <div className="flex items-center gap-3">
-                <span className="text-xs font-semibold text-slate-500 w-12 shrink-0">Starts</span>
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 w-12 shrink-0">Starts</span>
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <input
                     type="date"
                     required
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="flex-1 min-w-0 text-xs font-medium rounded-xl border border-slate-200 bg-white py-2 px-3 text-slate-800 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-2xs transition-all cursor-pointer"
+                    className="flex-1 min-w-0 text-xs font-medium rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-2xs transition-all cursor-pointer"
                   />
                   {!allDay && (
                     <input
@@ -404,7 +443,7 @@ export default function EventModal({
                       required
                       value={startTime}
                       onChange={(e) => setStartTime(e.target.value)}
-                      className="w-32 shrink-0 text-xs font-medium rounded-xl border border-slate-200 bg-white py-2 px-3 text-slate-800 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-2xs transition-all cursor-pointer"
+                      className="w-32 shrink-0 text-xs font-medium rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-2xs transition-all cursor-pointer"
                     />
                   )}
                 </div>
@@ -412,14 +451,14 @@ export default function EventModal({
 
               {/* Ends row */}
               <div className="flex items-center gap-3">
-                <span className="text-xs font-semibold text-slate-500 w-12 shrink-0">Ends</span>
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 w-12 shrink-0">Ends</span>
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <input
                     type="date"
                     required
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="flex-1 min-w-0 text-xs font-medium rounded-xl border border-slate-200 bg-white py-2 px-3 text-slate-800 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-2xs transition-all cursor-pointer"
+                    className="flex-1 min-w-0 text-xs font-medium rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-2xs transition-all cursor-pointer"
                   />
                   {!allDay && (
                     <input
@@ -427,7 +466,7 @@ export default function EventModal({
                       required
                       value={endTime}
                       onChange={(e) => setEndTime(e.target.value)}
-                      className="w-32 shrink-0 text-xs font-medium rounded-xl border border-slate-200 bg-white py-2 px-3 text-slate-800 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-2xs transition-all cursor-pointer"
+                      className="w-32 shrink-0 text-xs font-medium rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-2xs transition-all cursor-pointer"
                     />
                   )}
                 </div>
@@ -437,8 +476,8 @@ export default function EventModal({
 
           {/* Recurrence Selector */}
           <div className="space-y-1.5 pt-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-              <RefreshCw className="w-3.5 h-3.5 text-brand-600" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+              <RefreshCw className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
               Repeat
             </span>
             <div className={`grid gap-3 ${recurrenceFreq !== 'NONE' ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
@@ -460,16 +499,76 @@ export default function EventModal({
                     value={recurrenceUntil}
                     onChange={(e) => setRecurrenceUntil(e.target.value)}
                     placeholder="Repeat until"
-                    className="w-full text-xs font-medium rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white focus:bg-white py-2.5 px-3.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/20 shadow-2xs"
+                    className="w-full text-xs font-medium rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/60 hover:bg-white dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 py-2.5 px-3.5 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 shadow-2xs"
                   />
                 </div>
               )}
             </div>
           </div>
 
+          {/* Guests / Attendees Section */}
+          <div className="space-y-2.5 pt-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
+                Guests / Attendees ({attendees.length})
+              </span>
+            </div>
+
+            {/* Add guest input */}
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <input
+                  type="email"
+                  value={attendeeEmailInput}
+                  onChange={(e) => setAttendeeEmailInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddAttendee();
+                    }
+                  }}
+                  placeholder="Add guest email (e.g. colleague@zoner.app)..."
+                  className="w-full text-xs font-medium rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/60 hover:bg-white dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 py-2.5 px-3.5 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all shadow-2xs"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleAddAttendee}
+                className="px-3.5 py-2.5 text-xs font-semibold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/50 hover:bg-brand-100 dark:hover:bg-brand-900/60 border border-brand-200/60 dark:border-brand-800/60 rounded-xl transition-colors shrink-0 flex items-center gap-1 cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add</span>
+              </button>
+            </div>
+
+            {/* Attendees list badges */}
+            {attendees.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-1 max-h-28 overflow-y-auto">
+                {attendees.map((att) => (
+                  <span
+                    key={att.email}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-brand-500 shrink-0" />
+                    <span className="truncate max-w-[180px]">{att.email}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveAttendee(att.email)}
+                      className="text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded transition-colors ml-0.5 cursor-pointer"
+                      title="Remove guest"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Location */}
           <div>
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 flex items-center gap-1.5">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
               <MapPin className="w-3.5 h-3.5 text-slate-400" />
               Location
             </label>
@@ -478,13 +577,13 @@ export default function EventModal({
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="Conference room, Zoom link, or address..."
-              className="w-full text-xs font-medium rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white focus:bg-white py-2.5 px-3.5 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all shadow-2xs"
+              className="w-full text-xs font-medium rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/60 hover:bg-white dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 py-2.5 px-3.5 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all shadow-2xs"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 flex items-center gap-1.5">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
               <AlignLeft className="w-3.5 h-3.5 text-slate-400" />
               Description
             </label>
@@ -493,22 +592,22 @@ export default function EventModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Add agenda, notes, or links..."
-              className="w-full text-xs font-medium rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white focus:bg-white py-2.5 px-3.5 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all shadow-2xs"
+              className="w-full text-xs font-medium rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/60 hover:bg-white dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 py-2.5 px-3.5 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all shadow-2xs"
             />
           </div>
 
           {/* Reminders Section */}
           <div className="space-y-2.5 pt-1">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                <Bell className="w-3.5 h-3.5 text-brand-600" />
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                <Bell className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
                 Reminders
               </span>
               {reminders.length < 3 && (
                 <button
                   type="button"
                   onClick={handleAddReminder}
-                  className="text-xs text-brand-600 hover:text-brand-700 font-semibold flex items-center gap-1 px-2 py-0.5 rounded-lg hover:bg-brand-50 transition-colors"
+                  className="text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-semibold flex items-center gap-1 px-2 py-0.5 rounded-lg hover:bg-brand-50 dark:hover:bg-brand-950/40 transition-colors cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Add Reminder
@@ -559,7 +658,7 @@ export default function EventModal({
                   <button
                     type="button"
                     onClick={() => handleRemoveReminder(idx)}
-                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                    className="p-2 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
                     title="Remove reminder"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -570,18 +669,18 @@ export default function EventModal({
           </div>
 
           {/* Footer Actions */}
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+              className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2.5 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl shadow-md shadow-brand-500/20 disabled:opacity-60 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center gap-1.5"
+              className="px-5 py-2.5 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl shadow-md shadow-brand-500/20 disabled:opacity-60 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center gap-1.5 cursor-pointer"
             >
               {isSubmitting ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Event'}
             </button>

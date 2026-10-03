@@ -261,26 +261,26 @@ export default function CalendarView({
   return (
     <div className="h-full flex flex-col min-w-0">
       {/* Calendar Top Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 mb-2 border-b border-slate-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 mb-2 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3 w-full sm:w-auto">
           <div className="flex items-center gap-1.5 shrink-0">
             <button
               onClick={handleToday}
-              className="px-2.5 py-1 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/80 rounded-lg transition-colors shadow-2xs cursor-pointer"
+              className="px-2.5 py-1 text-xs font-semibold text-slate-700 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg transition-colors shadow-2xs cursor-pointer"
             >
               Today
             </button>
             <div className="flex items-center">
               <button
                 onClick={handlePrev}
-                className="p-1 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                className="p-1 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
                 title="Previous"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 onClick={handleNext}
-                className="p-1 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                className="p-1 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
                 title="Next"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -289,7 +289,7 @@ export default function CalendarView({
           </div>
 
           <div className="flex items-center gap-1.5 min-w-0">
-            <h2 className="text-sm sm:text-lg font-bold text-slate-800 tracking-tight truncate">
+            <h2 className="text-sm sm:text-lg font-bold text-slate-800 dark:text-slate-100 tracking-tight truncate">
               {currentTitle || 'Calendar'}
             </h2>
             {isLoading && (
@@ -299,13 +299,13 @@ export default function CalendarView({
         </div>
 
         {/* View Switcher */}
-        <div className="flex items-center gap-0.5 sm:gap-1 bg-slate-100/80 p-0.5 sm:p-1 rounded-xl border border-slate-200/50 self-end sm:self-auto shrink-0">
+        <div className="flex items-center gap-0.5 sm:gap-1 bg-slate-100/80 dark:bg-slate-800/80 p-0.5 sm:p-1 rounded-xl border border-slate-200/50 dark:border-slate-700/60 self-end sm:self-auto shrink-0">
           <button
             onClick={() => handleViewChange('dayGridMonth')}
             className={`px-2.5 sm:px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               currentView === 'dayGridMonth'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-500 hover:text-slate-800'
+                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-xs'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
             Month
@@ -314,8 +314,8 @@ export default function CalendarView({
             onClick={() => handleViewChange('timeGridWeek')}
             className={`px-2.5 sm:px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               currentView === 'timeGridWeek'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-500 hover:text-slate-800'
+                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-xs'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
             Week
@@ -324,8 +324,8 @@ export default function CalendarView({
             onClick={() => handleViewChange('timeGridDay')}
             className={`px-2.5 sm:px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               currentView === 'timeGridDay'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-500 hover:text-slate-800'
+                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-xs'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
             Day

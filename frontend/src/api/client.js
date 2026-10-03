@@ -235,6 +235,7 @@ export const api = {
       if (excludeEventId) params.append('excludeEventId', excludeEventId);
       return apiRequest(`/events/availability?${params.toString()}`);
     },
+    rsvp: (id, status) => apiRequest(`/events/${id}/rsvp`, { method: 'PUT', body: JSON.stringify({ status }) }),
   },
 
   // Notifications

@@ -33,6 +33,28 @@ public final class EventDto {
         }
     }
 
+    public record AttendeeDto(
+            Long id,
+            @NotBlank(message = "Attendee email is required")
+            String email,
+            String displayName,
+            AttendeeStatus status
+    ) {
+        public static AttendeeDto from(EventAttendee attendee) {
+            return new AttendeeDto(
+                    attendee.getId(),
+                    attendee.getEmail(),
+                    attendee.getDisplayName(),
+                    attendee.getStatus()
+            );
+        }
+    }
+
+    public record RsvpRequest(
+            @NotNull(message = "RSVP status is required")
+            AttendeeStatus status
+    ) {}
+
     public record CreateEventRequest(
             @NotNull(message = "Calendar ID is required")
             Long calendarId,
@@ -54,13 +76,21 @@ public final class EventDto {
 
             String timeZone,
             String recurrenceRule,
-            List<ReminderDto> reminders
+            List<ReminderDto> reminders,
+            List<AttendeeDto> attendees
     ) {
+        // Constructor overload for backward compatibility with 11-parameter call without attendees
+        public CreateEventRequest(
+                Long calendarId, String title, String description, String location, String color,
+                Boolean allDay, Instant startAt, Instant endAt, String timeZone, String recurrenceRule, List<ReminderDto> reminders) {
+            this(calendarId, title, description, location, color, allDay, startAt, endAt, timeZone, recurrenceRule, reminders, null);
+        }
+
         // Constructor overload for backward compatibility with 9-parameter call without recurrenceRule
         public CreateEventRequest(
                 Long calendarId, String title, String description, String location, String color,
                 Boolean allDay, Instant startAt, Instant endAt, String timeZone, List<ReminderDto> reminders) {
-            this(calendarId, title, description, location, color, allDay, startAt, endAt, timeZone, null, reminders);
+            this(calendarId, title, description, location, color, allDay, startAt, endAt, timeZone, null, reminders, null);
         }
     }
 
@@ -87,13 +117,22 @@ public final class EventDto {
             RecurrenceEditMode editMode,
             Instant originalStart,
             Long version,
-            List<ReminderDto> reminders
+            List<ReminderDto> reminders,
+            List<AttendeeDto> attendees
     ) {
+        // Constructor overload for backward compatibility with 14-parameter call without attendees
+        public UpdateEventRequest(
+                Long calendarId, String title, String description, String location, String color,
+                Boolean allDay, Instant startAt, Instant endAt, String timeZone, String recurrenceRule,
+                RecurrenceEditMode editMode, Instant originalStart, Long version, List<ReminderDto> reminders) {
+            this(calendarId, title, description, location, color, allDay, startAt, endAt, timeZone, recurrenceRule, editMode, originalStart, version, reminders, null);
+        }
+
         // Constructor overload for backward compatibility with M3 calls
         public UpdateEventRequest(
                 Long calendarId, String title, String description, String location, String color,
                 Boolean allDay, Instant startAt, Instant endAt, String timeZone, Long version, List<ReminderDto> reminders) {
-            this(calendarId, title, description, location, color, allDay, startAt, endAt, timeZone, null, RecurrenceEditMode.ALL, null, version, reminders);
+            this(calendarId, title, description, location, color, allDay, startAt, endAt, timeZone, null, RecurrenceEditMode.ALL, null, version, reminders, null);
         }
     }
 
@@ -120,11 +159,27 @@ public final class EventDto {
             Long createdBy,
             Instant createdAt,
             Instant updatedAt,
-            List<ReminderDto> reminders
+            List<ReminderDto> reminders,
+            List<AttendeeDto> attendees
     ) {
+        // Constructor overload for backward compatibility with 23-parameter calls
+        public EventResponse(
+                Long id, Long calendarId, String calendarName, String calendarColor,
+                String title, String description, String location, String color,
+                boolean allDay, Instant startAt, Instant endAt, LocalDateTime startLocal,
+                LocalDateTime endLocal, String timeZone, String recurrenceRule,
+                Instant originalStart, boolean recurring, boolean exception, Long version,
+                Long createdBy, Instant createdAt, Instant updatedAt, List<ReminderDto> reminders) {
+            this(id, calendarId, calendarName, calendarColor, title, description, location, color, allDay, startAt, endAt, startLocal, endLocal, timeZone, recurrenceRule, originalStart, recurring, exception, version, createdBy, createdAt, updatedAt, reminders, List.of());
+        }
+
         public static EventResponse from(Event event) {
             List<ReminderDto> reminderDtos = (event.getReminders() != null)
                     ? event.getReminders().stream().map(ReminderDto::from).toList()
+                    : List.of();
+
+            List<AttendeeDto> attendeeDtos = (event.getAttendees() != null)
+                    ? event.getAttendees().stream().map(AttendeeDto::from).toList()
                     : List.of();
 
             boolean isRecurring = event.getRecurrenceRule() != null && !event.getRecurrenceRule().isBlank();
@@ -152,13 +207,18 @@ public final class EventDto {
                     event.getCreatedBy() != null ? event.getCreatedBy().getId() : null,
                     event.getCreatedAt(),
                     event.getUpdatedAt(),
-                    reminderDtos
+                    reminderDtos,
+                    attendeeDtos
             );
         }
 
         public static EventResponse fromOccurrence(Event event, Instant occStart, EventException exception) {
             List<ReminderDto> reminderDtos = (event.getReminders() != null)
                     ? event.getReminders().stream().map(ReminderDto::from).toList()
+                    : List.of();
+
+            List<AttendeeDto> attendeeDtos = (event.getAttendees() != null)
+                    ? event.getAttendees().stream().map(AttendeeDto::from).toList()
                     : List.of();
 
             boolean isRecurring = event.getRecurrenceRule() != null && !event.getRecurrenceRule().isBlank();
@@ -199,7 +259,8 @@ public final class EventDto {
                         event.getCreatedBy() != null ? event.getCreatedBy().getId() : null,
                         event.getCreatedAt(),
                         event.getUpdatedAt(),
-                        reminderDtos
+                        reminderDtos,
+                        attendeeDtos
                 );
             }
 
@@ -229,7 +290,8 @@ public final class EventDto {
                     event.getCreatedBy() != null ? event.getCreatedBy().getId() : null,
                     event.getCreatedAt(),
                     event.getUpdatedAt(),
-                    reminderDtos
+                    reminderDtos,
+                    attendeeDtos
             );
         }
     }

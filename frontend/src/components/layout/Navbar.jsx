@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { api } from '../../api/client';
-import { Calendar, Bell, Search, Globe, LogOut, Check, Trash2, Clock, ChevronDown, Key, Menu } from 'lucide-react';
+import { Calendar, Bell, Search, Globe, LogOut, Check, Trash2, Clock, ChevronDown, Key, Menu, Sun, Moon } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import SettingsModal from '../settings/SettingsModal';
 
 export default function Navbar({ onOpenSearch, onViewChange, currentView = 'timeGridWeek', onToggleMobileSidebar }) {
   const { user, logout } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -93,13 +95,13 @@ export default function Navbar({ onOpenSearch, onViewChange, currentView = 'time
   }, []);
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200 px-3 sm:px-6 flex items-center justify-between z-30 sticky top-0">
+    <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3 sm:px-6 flex items-center justify-between z-30 sticky top-0 transition-colors">
       {/* Brand & Mobile Hamburger */}
       <div className="flex items-center gap-2 sm:gap-3">
         {/* Mobile Hamburger Menu Button */}
         <button
           onClick={onToggleMobileSidebar}
-          className="md:hidden p-1.5 -ml-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+          className="md:hidden p-1.5 -ml-1 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
           aria-label="Toggle Navigation & Calendars"
           title="Open Calendars"
         >
@@ -110,10 +112,10 @@ export default function Navbar({ onOpenSearch, onViewChange, currentView = 'time
           <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
         </div>
         <div>
-          <span className="text-lg sm:text-xl font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+          <span className="text-lg sm:text-xl font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
             Zoner
           </span>
-          <span className="hidden sm:inline-block ml-2 text-xs font-medium text-slate-400">
+          <span className="hidden sm:inline-block ml-2 text-xs font-medium text-slate-400 dark:text-slate-500">
             Smart Calendar
           </span>
         </div>
@@ -123,13 +125,13 @@ export default function Navbar({ onOpenSearch, onViewChange, currentView = 'time
       <div className="flex-1 max-w-md mx-4 hidden md:block">
         <button
           onClick={onOpenSearch}
-          className="w-full flex items-center justify-between px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-sm text-slate-400 hover:text-slate-600 transition-colors"
+          className="w-full flex items-center justify-between px-3.5 py-1.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer"
         >
           <div className="flex items-center gap-2">
             <Search className="w-4 h-4" />
             <span>Search events, descriptions, attendees...</span>
           </div>
-          <kbd className="px-1.5 py-0.5 text-[10px] font-semibold bg-white border border-slate-200 rounded shadow-xs text-slate-500">
+          <kbd className="px-1.5 py-0.5 text-[10px] font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded shadow-xs text-slate-500 dark:text-slate-400">
             ⌘K
           </kbd>
         </button>
@@ -140,7 +142,7 @@ export default function Navbar({ onOpenSearch, onViewChange, currentView = 'time
         {/* Mobile Search Button */}
         <button
           onClick={onOpenSearch}
-          className="md:hidden p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+          className="md:hidden p-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
           aria-label="Search"
           title="Search events"
         >
@@ -148,16 +150,26 @@ export default function Navbar({ onOpenSearch, onViewChange, currentView = 'time
         </button>
 
         {/* Time Zone Indicator */}
-        <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 border border-slate-200/80 rounded-full text-xs font-medium text-slate-600">
-          <Globe className="w-3.5 h-3.5 text-brand-600" />
+        <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-full text-xs font-medium text-slate-600 dark:text-slate-300">
+          <Globe className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
           <span>{user?.timeZone || 'UTC'}</span>
         </div>
+
+        {/* Dark Mode Toggle */}
+        <button
+          onClick={toggleTheme}
+          className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+          aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {isDark ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-slate-500" />}
+        </button>
 
         {/* Notifications Bell */}
         <div className="relative" ref={notifRef}>
           <button
             onClick={handleToggleNotifications}
-            className="relative p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+            className="relative p-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
             aria-label="Notifications"
           >
             <Bell className="w-5 h-5" />

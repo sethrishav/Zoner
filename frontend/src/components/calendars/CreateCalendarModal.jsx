@@ -52,31 +52,31 @@ export default function CreateCalendarModal({ isOpen, onClose, onCreated }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-100">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full border border-slate-100 p-6">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full border border-slate-100 dark:border-slate-800 p-6">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 flex items-center justify-center">
               <Calendar className="w-4 h-4" />
             </div>
-            <h3 className="font-semibold text-base text-slate-800">Create New Calendar</h3>
+            <h3 className="font-semibold text-base text-slate-800 dark:text-slate-100">Create New Calendar</h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-50 transition-colors"
+            className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {error && (
-          <div className="mt-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800">
+          <div className="mt-4 p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-xl text-xs text-rose-800 dark:text-rose-200">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
               Calendar Name
             </label>
             <input
@@ -86,12 +86,12 @@ export default function CreateCalendarModal({ isOpen, onClose, onCreated }) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Work, Family, Gym, Projects..."
-              className="w-full text-xs rounded-lg border border-slate-200 py-2 px-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
               Description (Optional)
             </label>
             <textarea
@@ -99,12 +99,12 @@ export default function CreateCalendarModal({ isOpen, onClose, onCreated }) {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="What events belong to this calendar?"
-              className="w-full text-xs rounded-lg border border-slate-200 py-2 px-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
               Color Theme
             </label>
             <div className="flex items-center gap-2">
@@ -113,8 +113,8 @@ export default function CreateCalendarModal({ isOpen, onClose, onCreated }) {
                   key={c}
                   type="button"
                   onClick={() => setColor(c)}
-                  className={`w-7 h-7 rounded-full flex items-center justify-center transition-transform ${
-                    color === c ? 'scale-110 ring-2 ring-slate-400 ring-offset-2' : 'hover:scale-105'
+                  className={`w-7 h-7 rounded-full flex items-center justify-center transition-transform cursor-pointer ${
+                    color === c ? 'scale-110 ring-2 ring-slate-400 dark:ring-slate-500 ring-offset-2 dark:ring-offset-slate-900' : 'hover:scale-105'
                   }`}
                   style={{ backgroundColor: c }}
                 >
@@ -124,18 +124,18 @@ export default function CreateCalendarModal({ isOpen, onClose, onCreated }) {
             </div>
           </div>
 
-          <div className="mt-6 flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+          <div className="mt-6 flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              className="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-sm disabled:opacity-60 transition-colors"
+              className="px-5 py-2 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-sm disabled:opacity-60 transition-colors cursor-pointer"
             >
               {isSubmitting ? 'Creating...' : 'Create Calendar'}
             </button>
