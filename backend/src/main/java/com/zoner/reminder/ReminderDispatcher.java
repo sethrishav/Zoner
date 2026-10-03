@@ -148,17 +148,9 @@ public class ReminderDispatcher {
 
     private boolean dispatchIfDue(Reminder reminder, Event event, Instant occStart, Instant fireAt, EventException ex) {
         if (reminderDispatchRepository.existsByReminderIdAndOccurrenceStart(reminder.getId(), occStart)) {
-            // Self-healing check: if dispatch was previously marked SENT, but no notification actually exists
-            // in the database (e.g. previous crash before channel.send), heal the orphan dispatch so the user gets notified.
-            long notificationCount = notificationRepository.countByEventIdAndOccurrenceStart(event.getId(), occStart);
-            if (notificationCount == 0) {
-                log.warn("[REMINDER SELF-HEALING] Found orphan dispatch record for reminder ID={} (eventId={}, title='{}', occStart={}) with 0 notifications. Removing orphan dispatch and re-sending.",
-                        reminder.getId(), event.getId(), event.getTitle(), occStart);
-                reminderDispatchRepository.deleteByReminderIdAndOccurrenceStart(reminder.getId(), occStart);
-            } else {
-                log.debug("[REMINDER DISPATCH] Reminder ID={} for event ID={} already dispatched for occurrence {}", reminder.getId(), event.getId(), occStart);
-                return false;
-            }
+            log.debug("[REMINDER DISPATCH] Reminder ID={} for event ID={} already dispatched for occurrence {}. Skipping duplicate.",
+                    reminder.getId(), event.getId(), occStart);
+            return false;
         }
 
         // 1. Resolve recipients safely without lazy proxy initialization issues

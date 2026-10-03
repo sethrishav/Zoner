@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { api } from '../../api/client';
-import { Calendar, Bell, Search, Globe, LogOut, Check, Trash2, Clock, ChevronDown, Key, Menu, Sun, Moon } from 'lucide-react';
+import { Calendar, Bell, Search, Globe, LogOut, Check, Trash2, Clock, ChevronDown, Key, Menu, Sun, Moon, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import SettingsModal from '../settings/SettingsModal';
 
@@ -14,27 +14,102 @@ export default function Navbar({ onOpenSearch, onViewChange, currentView = 'time
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [floatingToasts, setFloatingToasts] = useState([]);
+  const seenNotificationIdsRef = useRef(new Set());
+  const isInitialMountRef = useRef(true);
   const notifRef = useRef(null);
   const profileRef = useRef(null);
 
-  // Poll unread count every 30 seconds
+  const isNotificationRead = (n) => Boolean(n.read || n.isRead);
+
+  // Trigger top-right floating toast (auto-dismiss in 3.5s)
+  const triggerFloatingToast = (notif) => {
+    const toastId = `${notif.id}-${Date.now()}`;
+    const newToast = {
+      id: toastId,
+      notificationId: notif.id,
+      title: notif.title || 'Reminder Alert',
+      message: notif.message,
+      eventTitle: notif.eventTitle,
+      createdAt: notif.createdAt,
+    };
+
+    setFloatingToasts((prev) => [newToast, ...prev].slice(0, 3));
+
+    // Auto-dismiss in 3.5 seconds (between 3-4s as requested)
+    setTimeout(() => {
+      setFloatingToasts((prev) => prev.filter((t) => t.id !== toastId));
+    }, 3500);
+  };
+
+  const dismissFloatingToast = (toastId) => {
+    setFloatingToasts((prev) => prev.filter((t) => t.id !== toastId));
+  };
+
+  const handleClickFloatingToast = () => {
+    setShowNotifications(true);
+  };
+
+  // Poll unread count every 10 seconds & check for newly arrived notifications
   useEffect(() => {
     let isMounted = true;
 
-    const fetchCount = async () => {
+    const parseCount = (res) => {
+      if (typeof res === 'number') return res;
+      if (res && typeof res.unreadCount === 'number') return res.unreadCount;
+      return 0;
+    };
+
+    const pollNotifications = async () => {
       try {
-        const count = await api.notifications.getUnreadCount();
+        const countRes = await api.notifications.getUnreadCount();
+        const count = parseCount(countRes);
         if (isMounted) setUnreadCount(count);
+
+        // Fetch notifications to detect newly arrived items
+        const items = await api.notifications.list(false);
+        if (!isMounted || !Array.isArray(items)) return;
+
+        setNotifications(items);
+
+        if (isInitialMountRef.current) {
+          // On first page load, register existing IDs so we don't spam toasts for old notifications
+          items.forEach((item) => seenNotificationIdsRef.current.add(item.id));
+          isInitialMountRef.current = false;
+        } else {
+          // On subsequent polls, find unread notifications that haven't been shown yet
+          const newItems = items.filter(
+            (item) => !isNotificationRead(item) && !seenNotificationIdsRef.current.has(item.id)
+          );
+
+          if (newItems.length > 0) {
+            newItems.forEach((item) => {
+              seenNotificationIdsRef.current.add(item.id);
+              triggerFloatingToast(item);
+            });
+          }
+        }
       } catch (err) {
         // Silently tolerate background poll errors
       }
     };
 
-    fetchCount();
-    const interval = setInterval(fetchCount, 30000);
+    pollNotifications();
+    const interval = setInterval(pollNotifications, 10000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        pollNotifications();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleVisibilityChange);
+
     return () => {
       isMounted = false;
       clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleVisibilityChange);
     };
   }, []);
 
@@ -46,13 +121,13 @@ export default function Navbar({ onOpenSearch, onViewChange, currentView = 'time
       try {
         const items = await api.notifications.list(false);
         setNotifications(items);
+        const unreadItems = items.filter((n) => !isNotificationRead(n));
+        setUnreadCount(unreadItems.length);
       } catch (err) {
         // Silently tolerate
       }
     }
   };
-
-  const isNotificationRead = (n) => Boolean(n.read || n.isRead);
 
   const handleMarkAsRead = async (id, e) => {
     e.stopPropagation();
@@ -176,8 +251,9 @@ export default function Navbar({ onOpenSearch, onViewChange, currentView = 'time
           >
             <Bell className="w-5 h-5" />
             {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
-                {unreadCount > 9 ? '9+' : unreadCount}
+              <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5 pointer-events-none">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 ring-2 ring-white dark:ring-slate-900 shadow-xs shadow-emerald-500/50"></span>
               </span>
             )}
           </button>
@@ -189,7 +265,8 @@ export default function Navbar({ onOpenSearch, onViewChange, currentView = 'time
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-100">Notifications</h3>
                   {unreadCount > 0 && (
-                    <span className="px-1.5 py-0.5 bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-300 text-xs font-semibold rounded">
+                    <span className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-xs font-semibold rounded-full flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                       {unreadCount} new
                     </span>
                   )}
@@ -321,6 +398,44 @@ export default function Navbar({ onOpenSearch, onViewChange, currentView = 'time
         isOpen={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
       />
+
+      {/* Floating Toast Notification Container (Top Right, auto-dismiss 3-4s) */}
+      <div className="fixed top-18 sm:top-20 right-4 sm:right-6 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none">
+        {floatingToasts.map((t) => (
+          <div
+            key={t.id}
+            className="pointer-events-auto bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-emerald-500/40 dark:border-emerald-500/50 rounded-2xl p-4 shadow-2xl shadow-emerald-950/15 dark:shadow-black/60 flex items-start gap-3.5 animate-in slide-in-from-top-3 duration-200 transition-all hover:scale-[1.01]"
+          >
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-xs">
+              <Bell className="w-4 h-4 animate-bounce" />
+            </div>
+            <div
+              className="flex-1 min-w-0 cursor-pointer"
+              onClick={() => handleClickFloatingToast(t)}
+            >
+              <div className="flex items-center justify-between gap-1.5 mb-1">
+                <span className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
+                  {t.title}
+                </span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/60 rounded-full shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  New
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-snug line-clamp-2">
+                {t.message}
+              </p>
+            </div>
+            <button
+              onClick={() => dismissFloatingToast(t.id)}
+              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 -mr-1 -mt-1 rounded-lg transition-colors cursor-pointer"
+              aria-label="Dismiss notification"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        ))}
+      </div>
     </header>
   );
 }

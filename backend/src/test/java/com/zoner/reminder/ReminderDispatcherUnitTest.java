@@ -139,8 +139,8 @@ class ReminderDispatcherUnitTest {
     }
 
     @Test
-    @DisplayName("Self-heals orphan dispatch when dispatch exists but 0 notifications exist in notifications table")
-    void selfHealsOrphanDispatchWhenZeroNotificationsExist() {
+    @DisplayName("Strict idempotency: does not re-dispatch when dispatch record exists even if user deleted notification")
+    void doesNotRedispatchWhenDispatchRecordExistsEvenIfNotificationDeleted() {
         User creator = createUser(1L, "creator@test.com", "Creator");
         Instant occStart = now.plus(Duration.ofMinutes(2));
         Event event = createEvent(200L, creator, occStart);
@@ -153,46 +153,14 @@ class ReminderDispatcherUnitTest {
         } catch (Exception ignored) {}
 
         when(reminderRepository.findAllWithEventAndRecipients()).thenReturn(List.of(reminder));
-        // Simulated bug scenario: dispatch row exists
+        // Reminder was already dispatched
         when(reminderDispatchRepository.existsByReminderIdAndOccurrenceStart(70L, occStart)).thenReturn(true);
-        // BUT 0 notifications in notifications table
-        when(notificationRepository.countByEventIdAndOccurrenceStart(200L, occStart)).thenReturn(0L);
-
-        when(eventAttendeeRepository.findByEventId(200L)).thenReturn(List.of());
-        when(channelRegistry.getChannel(ReminderChannel.IN_APP)).thenReturn(notificationChannel);
 
         int count = dispatcher.dispatchDueReminders(now);
 
-        // It self-healed: deleted orphan dispatch, sent notification, and re-saved dispatch!
-        assertThat(count).isEqualTo(1);
-        verify(reminderDispatchRepository).deleteByReminderIdAndOccurrenceStart(70L, occStart);
-        verify(notificationChannel).send(eq(creator), eq(event), eq(occStart), any(), any());
-        verify(reminderDispatchRepository).saveAndFlush(any(ReminderDispatch.class));
-    }
-
-    @Test
-    @DisplayName("Strict idempotency: does not re-dispatch when notification already exists")
-    void doesNotRedispatchWhenAlreadyDelivered() {
-        User creator = createUser(1L, "creator@test.com", "Creator");
-        Instant occStart = now.plus(Duration.ofMinutes(2));
-        Event event = createEvent(300L, creator, occStart);
-
-        Reminder reminder = new Reminder(event, 2, ReminderChannel.IN_APP);
-        try {
-            var field = Reminder.class.getDeclaredField("id");
-            field.setAccessible(true);
-            field.set(reminder, 80L);
-        } catch (Exception ignored) {}
-
-        when(reminderRepository.findAllWithEventAndRecipients()).thenReturn(List.of(reminder));
-        when(reminderDispatchRepository.existsByReminderIdAndOccurrenceStart(80L, occStart)).thenReturn(true);
-        // Notification exists!
-        when(notificationRepository.countByEventIdAndOccurrenceStart(300L, occStart)).thenReturn(1L);
-
-        int count = dispatcher.dispatchDueReminders(now);
-
+        // Strict idempotency: 0 dispatches, notification channel never called again
         assertThat(count).isEqualTo(0);
         verify(notificationChannel, never()).send(any(), any(), any(), any(), any());
-        verify(reminderDispatchRepository, never()).deleteByReminderIdAndOccurrenceStart(any(), any());
+        verify(reminderDispatchRepository, never()).saveAndFlush(any());
     }
 }
