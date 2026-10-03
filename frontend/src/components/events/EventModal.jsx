@@ -18,6 +18,7 @@ const PRESET_COLORS = [
 ];
 
 const REMINDER_PRESETS = [
+  { label: 'At time of event (0 min)', value: 0 },
   { label: '5 minutes before', value: 5 },
   { label: '10 minutes before', value: 10 },
   { label: '15 minutes before', value: 15 },
@@ -108,6 +109,17 @@ export default function EventModal({
         setAttendees([]);
       }
       setAttendeeEmailInput('');
+
+      if (event.reminders && Array.isArray(event.reminders) && event.reminders.length > 0) {
+        setReminders(
+          event.reminders.map((r) => ({
+            minutesBefore: r.minutesBefore,
+            channel: r.channel || 'IN_APP',
+          }))
+        );
+      } else {
+        setReminders([{ minutesBefore: 15, channel: 'IN_APP' }]);
+      }
     } else {
       // New event
       const baseStart = initialDate?.start
@@ -270,7 +282,7 @@ export default function EventModal({
       recurrenceRule: rrule,
       recurrenceUntil: untilInstant,
       version: event?.version,
-      reminders: reminders.filter((r) => r.minutesBefore > 0),
+      reminders: reminders.filter((r) => r.minutesBefore >= 0),
       attendees: attendees.map((a) => ({
         email: a.email,
         displayName: a.displayName || null,

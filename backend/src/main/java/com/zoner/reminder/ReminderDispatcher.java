@@ -1,7 +1,10 @@
 package com.zoner.reminder;
 
 import com.zoner.auth.User;
+import com.zoner.auth.UserRepository;
+import com.zoner.event.AttendeeStatus;
 import com.zoner.event.Event;
+import com.zoner.event.EventAttendee;
 import com.zoner.event.EventException;
 import com.zoner.event.EventExceptionRepository;
 import com.zoner.event.ExceptionType;
@@ -32,6 +35,7 @@ public class ReminderDispatcher {
     private final EventExceptionRepository eventExceptionRepository;
     private final RecurrenceExpander recurrenceExpander;
     private final NotificationChannelRegistry channelRegistry;
+    private final UserRepository userRepository;
     private final Clock clock;
 
     public ReminderDispatcher(
@@ -40,21 +44,30 @@ public class ReminderDispatcher {
             EventExceptionRepository eventExceptionRepository,
             RecurrenceExpander recurrenceExpander,
             NotificationChannelRegistry channelRegistry,
+            UserRepository userRepository,
             Clock clock) {
         this.reminderRepository = reminderRepository;
         this.reminderDispatchRepository = reminderDispatchRepository;
         this.eventExceptionRepository = eventExceptionRepository;
         this.recurrenceExpander = recurrenceExpander;
         this.channelRegistry = channelRegistry;
+        this.userRepository = userRepository;
         this.clock = clock;
     }
 
     /**
      * Periodic scheduled evaluation. Runs every 60 seconds.
      */
-    @Scheduled(fixedDelay = 60000)
+    @Scheduled(fixedDelay = 60000, initialDelay = 5000)
     public void scheduledDispatch() {
-        dispatchDueReminders(clock.instant());
+        try {
+            int dispatched = dispatchDueReminders(clock.instant());
+            if (dispatched > 0) {
+                log.info("Dispatched {} due reminder(s) at {}", dispatched, clock.instant());
+            }
+        } catch (Exception e) {
+            log.error("Error executing scheduled reminder dispatch", e);
+        }
     }
 
     /**
@@ -133,6 +146,13 @@ public class ReminderDispatcher {
         }
         if (event.getCalendar() != null && event.getCalendar().getOwner() != null) {
             recipients.add(event.getCalendar().getOwner());
+        }
+        if (event.getAttendees() != null) {
+            for (EventAttendee attendee : event.getAttendees()) {
+                if (attendee.getStatus() != AttendeeStatus.DECLINED && attendee.getEmail() != null && !attendee.getEmail().isBlank()) {
+                    userRepository.findByEmailIgnoreCase(attendee.getEmail().trim()).ifPresent(recipients::add);
+                }
+            }
         }
 
         String eventTitle = (ex != null && ex.getOverrideTitle() != null)

@@ -7,7 +7,9 @@ import com.zoner.reminder.NotificationDto.UnreadCountResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.Clock;
 import java.util.List;
+import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -27,9 +29,26 @@ import org.springframework.web.bind.annotation.RestController;
 public class NotificationController {
 
     private final NotificationService notificationService;
+    private final ReminderDispatcher reminderDispatcher;
+    private final Clock clock;
 
-    public NotificationController(NotificationService notificationService) {
+    public NotificationController(
+            NotificationService notificationService,
+            ReminderDispatcher reminderDispatcher,
+            Clock clock) {
         this.notificationService = notificationService;
+        this.reminderDispatcher = reminderDispatcher;
+        this.clock = clock;
+    }
+
+    @PostMapping("/dispatch")
+    @Operation(summary = "Trigger immediate reminder dispatch evaluation")
+    public ResponseEntity<Map<String, Object>> triggerDispatch() {
+        int count = reminderDispatcher.dispatchDueReminders(clock.instant());
+        return ResponseEntity.ok(Map.of(
+                "dispatchedCount", count,
+                "timestamp", clock.instant().toString()
+        ));
     }
 
     @GetMapping

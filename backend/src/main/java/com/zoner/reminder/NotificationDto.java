@@ -1,5 +1,6 @@
 package com.zoner.reminder;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 
 public final class NotificationDto {
@@ -17,6 +18,11 @@ public final class NotificationDto {
             Instant readAt,
             Instant createdAt
     ) {
+        @JsonProperty("isRead")
+        public boolean isRead() {
+            return read;
+        }
+
         public static NotificationResponse from(Notification n) {
             return new NotificationResponse(
                     n.getId(),
