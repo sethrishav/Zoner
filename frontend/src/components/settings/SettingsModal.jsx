@@ -211,8 +211,8 @@ export default function SettingsModal({ isOpen, onClose }) {
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-100">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-2xl w-full border border-slate-100 dark:border-slate-800 flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 dark:bg-slate-300/15 backdrop-blur-md dark:backdrop-blur-lg animate-in fade-in duration-150">
+      <div className="bg-white dark:bg-slate-900/95 dark:backdrop-blur-xl rounded-2xl shadow-2xl dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] max-w-2xl w-full border border-slate-100 dark:border-slate-700/80 dark:ring-1 dark:ring-white/10 flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2.5">
@@ -263,24 +263,24 @@ export default function SettingsModal({ isOpen, onClose }) {
           {activeTab === 'mcp' ? (
             <div className="space-y-6">
               {/* Informative Banner */}
-              <div className="p-4 bg-gradient-to-r from-brand-50 to-indigo-50/60 border border-brand-200/80 rounded-2xl flex items-start gap-3">
-                <ShieldCheck className="w-5 h-5 text-brand-600 shrink-0 mt-0.5" />
+              <div className="p-4 bg-gradient-to-r from-brand-50 to-indigo-50/60 dark:from-brand-950/40 dark:to-indigo-950/40 border border-brand-200/80 dark:border-brand-800/50 rounded-2xl flex items-start gap-3">
+                <ShieldCheck className="w-5 h-5 text-brand-600 dark:text-brand-400 shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <h4 className="font-semibold text-brand-900 text-xs">Model Context Protocol (MCP) Server</h4>
-                  <p className="text-slate-600 text-[11px] leading-relaxed">
-                    Connect Zoner to <strong>Claude Desktop</strong>, <strong>Cursor</strong>, or <strong>Claude Code</strong>. AI assistants can list calendars, schedule events, check your availability, and search your schedule using 9 calendar tools.
+                  <h4 className="font-semibold text-brand-900 dark:text-brand-300 text-xs">Model Context Protocol (MCP) Server</h4>
+                  <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
+                    Connect Zoner to <strong className="text-slate-800 dark:text-white">Claude Desktop</strong>, <strong className="text-slate-800 dark:text-white">Cursor</strong>, or <strong className="text-slate-800 dark:text-white">Claude Code</strong>. AI assistants can list calendars, schedule events, check your availability, and search your schedule using 9 calendar tools.
                   </p>
                 </div>
               </div>
 
               {/* Newly Created Token Display */}
               {newlyCreatedToken && (
-                <div className="p-4 bg-amber-50 border border-amber-300 rounded-2xl space-y-2 animate-in fade-in duration-200">
-                  <div className="flex items-center gap-2 text-amber-900 font-bold text-xs">
-                    <AlertCircle className="w-4 h-4 text-amber-600" />
+                <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-2xl space-y-2 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200 font-bold text-xs">
+                    <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                     <span>Copy your Personal Access Token now!</span>
                   </div>
-                  <p className="text-[11px] text-amber-800">
+                  <p className="text-[11px] text-amber-800 dark:text-amber-300">
                     For security reasons, this token will <strong>never</strong> be shown again.
                   </p>
                   <div className="flex items-center gap-2 mt-2">
@@ -288,7 +288,7 @@ export default function SettingsModal({ isOpen, onClose }) {
                       type="text"
                       readOnly
                       value={newlyCreatedToken}
-                      className="flex-1 font-mono text-[11px] bg-white border border-amber-300 rounded-xl px-3 py-2 text-slate-800 select-all"
+                      className="flex-1 font-mono text-[11px] bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-700 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 select-all"
                     />
                     <button
                       type="button"
@@ -305,14 +305,14 @@ export default function SettingsModal({ isOpen, onClose }) {
               {/* Tokens List Section */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider">
+                  <h4 className="font-bold text-slate-800 dark:text-slate-200 text-xs uppercase tracking-wider">
                     Personal Access Tokens
                   </h4>
                   {!isCreatingToken && (
                     <button
                       type="button"
                       onClick={() => setIsCreatingToken(true)}
-                      className="flex items-center gap-1.5 text-brand-600 hover:text-brand-700 font-semibold px-2.5 py-1 rounded-lg hover:bg-brand-50 transition-colors cursor-pointer"
+                      className="flex items-center gap-1.5 text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-semibold px-2.5 py-1 rounded-lg hover:bg-brand-50 dark:hover:bg-brand-950/50 transition-colors cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       Generate Token
@@ -322,11 +322,11 @@ export default function SettingsModal({ isOpen, onClose }) {
 
                 {/* Inline Creation Form */}
                 {isCreatingToken && (
-                  <form onSubmit={handleCreateToken} className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 animate-in fade-in duration-100">
-                    <h5 className="font-semibold text-slate-800 text-xs">Generate New Token</h5>
+                  <form onSubmit={handleCreateToken} className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl space-y-3 animate-in fade-in duration-100">
+                    <h5 className="font-semibold text-slate-800 dark:text-slate-200 text-xs">Generate New Token</h5>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div className="sm:col-span-2">
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
                           Token Name
                         </label>
                         <input
@@ -336,17 +336,17 @@ export default function SettingsModal({ isOpen, onClose }) {
                           value={tokenName}
                           onChange={(e) => setTokenName(e.target.value)}
                           placeholder="e.g. Cursor IDE, Claude Desktop"
-                          className="w-full text-xs font-medium rounded-xl border border-slate-200 bg-white py-2 px-3 text-slate-800 focus:outline-none focus:border-brand-500 shadow-2xs"
+                          className="w-full text-xs font-medium rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-brand-500 shadow-2xs"
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
                           Expiration
                         </label>
                         <select
                           value={expiresInDays}
                           onChange={(e) => setExpiresInDays(e.target.value)}
-                          className="w-full text-xs font-medium rounded-xl border border-slate-200 bg-white py-2 px-3 text-slate-800 focus:outline-none focus:border-brand-500 shadow-2xs cursor-pointer"
+                          className="w-full text-xs font-medium rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 px-3 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-brand-500 shadow-2xs cursor-pointer"
                         >
                           <option value="30">30 days</option>
                           <option value="90">90 days</option>
@@ -359,7 +359,7 @@ export default function SettingsModal({ isOpen, onClose }) {
                       <button
                         type="button"
                         onClick={() => setIsCreatingToken(false)}
-                        className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-200/70 rounded-lg transition-colors cursor-pointer"
+                        className="px-3 py-1.5 text-xs text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-700/60 rounded-lg transition-colors cursor-pointer"
                       >
                         Cancel
                       </button>
@@ -374,31 +374,31 @@ export default function SettingsModal({ isOpen, onClose }) {
                 )}
 
                 {/* Tokens Table */}
-                <div className="border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-100 bg-white">
+                <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-800/40">
                   {tokens.length === 0 ? (
-                    <div className="p-6 text-center text-slate-400">
+                    <div className="p-6 text-center text-slate-400 dark:text-slate-500">
                       No access tokens created yet. Generate one above to connect an AI client!
                     </div>
                   ) : (
                     tokens.map((token) => (
-                      <div key={token.id} className="p-3.5 flex items-center justify-between gap-3 hover:bg-slate-50/60 transition-colors">
+                      <div key={token.id} className="p-3.5 flex items-center justify-between gap-3 hover:bg-slate-50/60 dark:hover:bg-slate-800/60 transition-colors">
                         <div className="min-w-0 flex-1 space-y-0.5">
                           <div className="flex items-center gap-2">
-                            <span className="font-semibold text-slate-800 text-xs truncate">{token.name}</span>
-                            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200/60">
+                            <span className="font-semibold text-slate-800 dark:text-slate-200 text-xs truncate">{token.name}</span>
+                            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700">
                               {token.tokenPrefix}
                             </span>
                             {token.revoked ? (
-                              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
+                              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
                                 Revoked
                               </span>
                             ) : (
-                              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
                                 Active
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-3 text-[11px] text-slate-400">
+                          <div className="flex items-center gap-3 text-[11px] text-slate-400 dark:text-slate-500">
                             <span>Created: {new Date(token.createdAt).toLocaleDateString()}</span>
                             <span>•</span>
                             <span>Last used: {token.lastUsedAt ? new Date(token.lastUsedAt).toLocaleDateString() : 'Never'}</span>
@@ -409,7 +409,7 @@ export default function SettingsModal({ isOpen, onClose }) {
                           <button
                             type="button"
                             onClick={() => handleRevokeToken(token.id, token.name)}
-                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                            className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition-colors cursor-pointer"
                             title="Revoke token"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -423,18 +423,20 @@ export default function SettingsModal({ isOpen, onClose }) {
 
               {/* Client Configuration Setup Snippets */}
               <div className="space-y-3 pt-2">
-                <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-1.5">
-                  <Terminal className="w-3.5 h-3.5 text-brand-600" />
+                <h4 className="font-bold text-slate-800 dark:text-slate-200 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                  <Terminal className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
                   Client Configuration Snippets
                 </h4>
 
                 {/* Sub tabs for clients */}
-                <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+                <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
                   <button
                     type="button"
                     onClick={() => setClientType('cursor')}
                     className={`px-3 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
-                      clientType === 'cursor' ? 'bg-slate-900 text-white font-semibold' : 'text-slate-600 hover:bg-slate-100'
+                      clientType === 'cursor'
+                        ? 'bg-slate-900 dark:bg-brand-600 text-white font-semibold shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
                     }`}
                   >
                     Cursor
@@ -443,7 +445,9 @@ export default function SettingsModal({ isOpen, onClose }) {
                     type="button"
                     onClick={() => setClientType('claude_desktop')}
                     className={`px-3 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
-                      clientType === 'claude_desktop' ? 'bg-slate-900 text-white font-semibold' : 'text-slate-600 hover:bg-slate-100'
+                      clientType === 'claude_desktop'
+                        ? 'bg-slate-900 dark:bg-brand-600 text-white font-semibold shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
                     }`}
                   >
                     Claude Desktop
@@ -452,7 +456,9 @@ export default function SettingsModal({ isOpen, onClose }) {
                     type="button"
                     onClick={() => setClientType('claude_code')}
                     className={`px-3 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
-                      clientType === 'claude_code' ? 'bg-slate-900 text-white font-semibold' : 'text-slate-600 hover:bg-slate-100'
+                      clientType === 'claude_code'
+                        ? 'bg-slate-900 dark:bg-brand-600 text-white font-semibold shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
                     }`}
                   >
                     Claude Code
@@ -461,7 +467,9 @@ export default function SettingsModal({ isOpen, onClose }) {
                     type="button"
                     onClick={() => setClientType('curl')}
                     className={`px-3 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
-                      clientType === 'curl' ? 'bg-slate-900 text-white font-semibold' : 'text-slate-600 hover:bg-slate-100'
+                      clientType === 'curl'
+                        ? 'bg-slate-900 dark:bg-brand-600 text-white font-semibold shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
                     }`}
                   >
                     cURL Test
@@ -469,19 +477,19 @@ export default function SettingsModal({ isOpen, onClose }) {
                 </div>
 
                 {/* Target server URL indicator & customization */}
-                <div className="flex items-center justify-between gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[11px]">
+                <div className="flex items-center justify-between gap-2 px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-[11px]">
                   <div className="flex items-center gap-1.5 overflow-hidden flex-1 min-w-0">
-                    <span className="font-semibold text-slate-600 shrink-0">Endpoint Host:</span>
+                    <span className="font-semibold text-slate-600 dark:text-slate-400 shrink-0">Endpoint Host:</span>
                     {isEditingServerUrl ? (
                       <input
                         type="text"
                         value={customServerUrl}
                         onChange={(e) => setCustomServerUrl(e.target.value)}
                         placeholder={defaultApiBase}
-                        className="font-mono text-[11px] bg-white border border-brand-300 rounded px-2 py-0.5 text-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-500 w-full max-w-xs"
+                        className="font-mono text-[11px] bg-white dark:bg-slate-800 border border-brand-300 dark:border-brand-600 rounded px-2 py-0.5 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-brand-500 w-full max-w-xs"
                       />
                     ) : (
-                      <span className="font-mono text-slate-700 truncate" title={apiBase}>
+                      <span className="font-mono text-slate-700 dark:text-slate-300 truncate" title={apiBase}>
                         {apiBase}
                       </span>
                     )}
@@ -495,14 +503,14 @@ export default function SettingsModal({ isOpen, onClose }) {
                             setCustomServerUrl('');
                             setIsEditingServerUrl(false);
                           }}
-                          className="text-[11px] text-slate-500 hover:text-slate-700 px-1.5 py-0.5"
+                          className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 px-1.5 py-0.5"
                         >
                           Reset
                         </button>
                         <button
                           type="button"
                           onClick={() => setIsEditingServerUrl(false)}
-                          className="text-[11px] text-brand-600 font-semibold px-2 py-0.5 bg-brand-50 rounded"
+                          className="text-[11px] text-brand-600 dark:text-brand-400 font-semibold px-2 py-0.5 bg-brand-50 dark:bg-brand-950/60 rounded"
                         >
                           Done
                         </button>
@@ -514,7 +522,7 @@ export default function SettingsModal({ isOpen, onClose }) {
                           if (!customServerUrl) setCustomServerUrl(defaultApiBase);
                           setIsEditingServerUrl(true);
                         }}
-                        className="text-[11px] text-brand-600 hover:text-brand-700 font-semibold hover:underline"
+                        className="text-[11px] text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-semibold hover:underline"
                       >
                         {customServerUrl ? 'Edit URL' : 'Change URL'}
                       </button>
@@ -524,7 +532,7 @@ export default function SettingsModal({ isOpen, onClose }) {
 
                 {/* Code display */}
                 <div className="relative group">
-                  <pre className="p-4 bg-slate-900 text-slate-200 rounded-2xl font-mono text-[11px] overflow-x-auto leading-relaxed border border-slate-800">
+                  <pre className="p-4 bg-slate-900 dark:bg-slate-950 text-slate-200 rounded-2xl font-mono text-[11px] overflow-x-auto leading-relaxed border border-slate-800 dark:border-slate-800/80">
                     {clientType === 'cursor' && cursorSnippet}
                     {clientType === 'claude_desktop' && claudeDesktopSnippet}
                     {clientType === 'claude_code' && claudeCodeSnippet}
@@ -543,7 +551,7 @@ export default function SettingsModal({ isOpen, onClose }) {
                           : curlSnippet;
                       copyToClipboard(text, 'snippet');
                     }}
-                    className="absolute top-3 right-3 px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[10px] font-semibold flex items-center gap-1 transition-colors cursor-pointer border border-slate-700"
+                    className="absolute top-3 right-3 px-2.5 py-1 bg-slate-800 dark:bg-slate-900 hover:bg-slate-700 dark:hover:bg-slate-800 text-slate-200 rounded-lg text-[10px] font-semibold flex items-center gap-1 transition-colors cursor-pointer border border-slate-700 dark:border-slate-700"
                   >
                     {copiedSnippet === 'snippet' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
                     <span>{copiedSnippet === 'snippet' ? 'Copied' : 'Copy Snippet'}</span>

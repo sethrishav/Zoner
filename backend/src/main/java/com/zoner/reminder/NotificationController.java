@@ -30,24 +30,37 @@ public class NotificationController {
 
     private final NotificationService notificationService;
     private final ReminderDispatcher reminderDispatcher;
+    private final ReminderDispatchRepository reminderDispatchRepository;
     private final Clock clock;
 
     public NotificationController(
             NotificationService notificationService,
             ReminderDispatcher reminderDispatcher,
+            ReminderDispatchRepository reminderDispatchRepository,
             Clock clock) {
         this.notificationService = notificationService;
         this.reminderDispatcher = reminderDispatcher;
+        this.reminderDispatchRepository = reminderDispatchRepository;
         this.clock = clock;
     }
 
     @PostMapping("/dispatch")
     @Operation(summary = "Trigger immediate reminder dispatch evaluation")
-    public ResponseEntity<Map<String, Object>> triggerDispatch() {
+    public ResponseEntity<Map<String, Object>> triggerDispatch(
+            @RequestParam(value = "resetDispatches", defaultValue = "false") boolean resetDispatches,
+            @RequestParam(value = "reminderId", required = false) Long reminderId) {
+        if (resetDispatches) {
+            if (reminderId != null) {
+                reminderDispatchRepository.deleteByReminderId(reminderId);
+            } else {
+                reminderDispatchRepository.deleteAll();
+            }
+        }
         int count = reminderDispatcher.dispatchDueReminders(clock.instant());
         return ResponseEntity.ok(Map.of(
                 "dispatchedCount", count,
-                "timestamp", clock.instant().toString()
+                "timestamp", clock.instant().toString(),
+                "resetDispatches", resetDispatches
         ));
     }
 

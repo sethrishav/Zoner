@@ -22,6 +22,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Query("SELECT COUNT(n) FROM Notification n WHERE n.user.id = :userId AND n.readAt IS NULL")
     long countUnreadByUserId(@Param("userId") Long userId);
 
+    @Query("SELECT COUNT(n) FROM Notification n WHERE n.event.id = :eventId AND n.occurrenceStart = :occurrenceStart")
+    long countByEventIdAndOccurrenceStart(@Param("eventId") Long eventId, @Param("occurrenceStart") Instant occurrenceStart);
+
     Optional<Notification> findByIdAndUserId(Long id, Long userId);
 
     @Modifying

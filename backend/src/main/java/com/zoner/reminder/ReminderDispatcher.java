@@ -5,6 +5,7 @@ import com.zoner.auth.UserRepository;
 import com.zoner.event.AttendeeStatus;
 import com.zoner.event.Event;
 import com.zoner.event.EventAttendee;
+import com.zoner.event.EventAttendeeRepository;
 import com.zoner.event.EventException;
 import com.zoner.event.EventExceptionRepository;
 import com.zoner.event.ExceptionType;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional
 public class ReminderDispatcher {
 
     private static final Logger log = LoggerFactory.getLogger(ReminderDispatcher.class);
@@ -33,25 +35,31 @@ public class ReminderDispatcher {
     private final ReminderRepository reminderRepository;
     private final ReminderDispatchRepository reminderDispatchRepository;
     private final EventExceptionRepository eventExceptionRepository;
+    private final EventAttendeeRepository eventAttendeeRepository;
     private final RecurrenceExpander recurrenceExpander;
     private final NotificationChannelRegistry channelRegistry;
     private final UserRepository userRepository;
+    private final NotificationRepository notificationRepository;
     private final Clock clock;
 
     public ReminderDispatcher(
             ReminderRepository reminderRepository,
             ReminderDispatchRepository reminderDispatchRepository,
             EventExceptionRepository eventExceptionRepository,
+            EventAttendeeRepository eventAttendeeRepository,
             RecurrenceExpander recurrenceExpander,
             NotificationChannelRegistry channelRegistry,
             UserRepository userRepository,
+            NotificationRepository notificationRepository,
             Clock clock) {
         this.reminderRepository = reminderRepository;
         this.reminderDispatchRepository = reminderDispatchRepository;
         this.eventExceptionRepository = eventExceptionRepository;
+        this.eventAttendeeRepository = eventAttendeeRepository;
         this.recurrenceExpander = recurrenceExpander;
         this.channelRegistry = channelRegistry;
         this.userRepository = userRepository;
+        this.notificationRepository = notificationRepository;
         this.clock = clock;
     }
 
@@ -59,6 +67,7 @@ public class ReminderDispatcher {
      * Periodic scheduled evaluation. Runs every 60 seconds.
      */
     @Scheduled(fixedDelay = 60000, initialDelay = 5000)
+    @Transactional
     public void scheduledDispatch() {
         try {
             int dispatched = dispatchDueReminders(clock.instant());
@@ -127,19 +136,19 @@ public class ReminderDispatcher {
 
     private boolean dispatchIfDue(Reminder reminder, Event event, Instant occStart, Instant fireAt, EventException ex) {
         if (reminderDispatchRepository.existsByReminderIdAndOccurrenceStart(reminder.getId(), occStart)) {
-            return false;
+            // Self-healing check: if dispatch was previously marked SENT, but no notification actually exists
+            // in the database (e.g. previous crash before channel.send), heal the orphan dispatch so the user gets notified.
+            long notificationCount = notificationRepository.countByEventIdAndOccurrenceStart(event.getId(), occStart);
+            if (notificationCount == 0) {
+                log.warn("Detected orphan dispatch for reminder {} (event {}) with 0 notifications. Retrying delivery.",
+                        reminder.getId(), event.getId());
+                reminderDispatchRepository.deleteByReminderIdAndOccurrenceStart(reminder.getId(), occStart);
+            } else {
+                return false;
+            }
         }
 
-        ReminderDispatch dispatch = new ReminderDispatch(reminder, occStart, fireAt, DispatchStatus.SENT);
-        try {
-            reminderDispatchRepository.saveAndFlush(dispatch);
-        } catch (DataIntegrityViolationException e) {
-            // Concurrent execution already dispatched this occurrence
-            log.debug("Reminder {} already dispatched for occurrence {}", reminder.getId(), occStart);
-            return false;
-        }
-
-        // Send to recipients
+        // 1. Resolve recipients safely without lazy proxy initialization issues
         Set<User> recipients = new HashSet<>();
         if (event.getCreatedBy() != null) {
             recipients.add(event.getCreatedBy());
@@ -147,12 +156,20 @@ public class ReminderDispatcher {
         if (event.getCalendar() != null && event.getCalendar().getOwner() != null) {
             recipients.add(event.getCalendar().getOwner());
         }
-        if (event.getAttendees() != null) {
-            for (EventAttendee attendee : event.getAttendees()) {
+        try {
+            List<EventAttendee> attendees = eventAttendeeRepository.findByEventId(event.getId());
+            for (EventAttendee attendee : attendees) {
                 if (attendee.getStatus() != AttendeeStatus.DECLINED && attendee.getEmail() != null && !attendee.getEmail().isBlank()) {
                     userRepository.findByEmailIgnoreCase(attendee.getEmail().trim()).ifPresent(recipients::add);
                 }
             }
+        } catch (Exception e) {
+            log.warn("Could not query attendees for event {}: {}", event.getId(), e.getMessage());
+        }
+
+        if (recipients.isEmpty()) {
+            log.warn("No valid recipients found for reminder {} on event {}", reminder.getId(), event.getId());
+            return false;
         }
 
         String eventTitle = (ex != null && ex.getOverrideTitle() != null)
@@ -165,14 +182,28 @@ public class ReminderDispatcher {
                 : "'" + eventTitle + "' starts in " + reminder.getMinutesBefore() + " minutes.";
 
         NotificationChannel channel = channelRegistry.getChannel(reminder.getChannel());
+        int sentCount = 0;
         for (User recipient : recipients) {
             try {
                 channel.send(recipient, event, occStart, title, message);
+                sentCount++;
             } catch (Exception e) {
                 log.error("Failed to send notification via {} to user {}", channel.getChannel(), recipient.getId(), e);
             }
         }
 
-        return true;
+        // 2. Only persist dispatch record AFTER notifications are successfully processed
+        if (sentCount > 0) {
+            ReminderDispatch dispatch = new ReminderDispatch(reminder, occStart, fireAt, DispatchStatus.SENT);
+            try {
+                reminderDispatchRepository.saveAndFlush(dispatch);
+            } catch (DataIntegrityViolationException e) {
+                // Concurrent execution already dispatched this occurrence
+                log.debug("Reminder {} already dispatched for occurrence {}", reminder.getId(), occStart);
+            }
+            return true;
+        }
+
+        return false;
     }
 }

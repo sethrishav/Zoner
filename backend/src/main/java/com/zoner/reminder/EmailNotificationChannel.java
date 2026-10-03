@@ -12,6 +12,11 @@ import org.springframework.stereotype.Component;
 public class EmailNotificationChannel implements NotificationChannel {
 
     private static final Logger log = LoggerFactory.getLogger(EmailNotificationChannel.class);
+    private final NotificationRepository notificationRepository;
+
+    public EmailNotificationChannel(NotificationRepository notificationRepository) {
+        this.notificationRepository = notificationRepository;
+    }
 
     @Override
     public ReminderChannel getChannel() {
@@ -22,5 +27,11 @@ public class EmailNotificationChannel implements NotificationChannel {
     public void send(User recipient, Event event, Instant occurrenceStart, String title, String message) {
         log.info("[EMAIL STUB] Sending email reminder to '{}' <{}>: {} - {}",
                 recipient.getDisplayName(), recipient.getEmail(), title, message);
+        try {
+            Notification notification = new Notification(recipient, event, occurrenceStart, title, message);
+            notificationRepository.saveAndFlush(notification);
+        } catch (Exception e) {
+            log.warn("Could not persist in-app notification copy for email reminder: {}", e.getMessage());
+        }
     }
 }
