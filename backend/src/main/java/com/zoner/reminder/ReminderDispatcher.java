@@ -39,7 +39,6 @@ public class ReminderDispatcher {
     private final RecurrenceExpander recurrenceExpander;
     private final NotificationChannelRegistry channelRegistry;
     private final UserRepository userRepository;
-    private final NotificationRepository notificationRepository;
     private final Clock clock;
 
     public ReminderDispatcher(
@@ -50,7 +49,6 @@ public class ReminderDispatcher {
             RecurrenceExpander recurrenceExpander,
             NotificationChannelRegistry channelRegistry,
             UserRepository userRepository,
-            NotificationRepository notificationRepository,
             Clock clock) {
         this.reminderRepository = reminderRepository;
         this.reminderDispatchRepository = reminderDispatchRepository;
@@ -59,7 +57,6 @@ public class ReminderDispatcher {
         this.recurrenceExpander = recurrenceExpander;
         this.channelRegistry = channelRegistry;
         this.userRepository = userRepository;
-        this.notificationRepository = notificationRepository;
         this.clock = clock;
     }
 

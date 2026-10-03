@@ -60,9 +60,6 @@ class ReminderDispatcherUnitTest {
     @Mock
     private UserRepository userRepository;
 
-    @Mock
-    private NotificationRepository notificationRepository;
-
     private Clock clock;
     private ReminderDispatcher dispatcher;
 
@@ -79,7 +76,6 @@ class ReminderDispatcherUnitTest {
                 recurrenceExpander,
                 channelRegistry,
                 userRepository,
-                notificationRepository,
                 clock
         );
     }
