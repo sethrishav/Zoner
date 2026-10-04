@@ -28,14 +28,50 @@ export default function CalendarView({
   const [currentRange, setCurrentRange] = useState({ from: null, to: null });
   const [isLoading, setIsLoading] = useState(false);
 
+  // Calculate target scroll time: 1 hour before current time (clamped to 00:00:00) so the current timeline is clearly visible
+  const getNowScrollTime = useCallback(() => {
+    const now = new Date();
+    const hour = Math.max(0, now.getHours() - 1);
+    return `${String(hour).padStart(2, '0')}:00:00`;
+  }, []);
+
+  const [initialScrollTime] = useState(() => {
+    const now = new Date();
+    const hour = Math.max(0, now.getHours() - 1);
+    return `${String(hour).padStart(2, '0')}:00:00`;
+  });
+
+  // Ensure calendar scrolls to current timeline on initial load once container layout is settled
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (calendarRef.current) {
+        const apiObj = calendarRef.current.getApi();
+        apiObj.scrollToTime(getNowScrollTime());
+      }
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [getNowScrollTime]);
+
   // Sync external selectedDate changes (e.g. from sidebar mini-calendar)
   useEffect(() => {
     if (selectedDate && calendarRef.current) {
       const apiObj = calendarRef.current.getApi();
       apiObj.gotoDate(selectedDate);
       setCurrentTitle(apiObj.view.title);
+
+      const sel = new Date(selectedDate);
+      const today = new Date();
+      if (
+        sel.getFullYear() === today.getFullYear() &&
+        sel.getMonth() === today.getMonth() &&
+        sel.getDate() === today.getDate()
+      ) {
+        setTimeout(() => {
+          apiObj.scrollToTime(getNowScrollTime());
+        }, 50);
+      }
     }
-  }, [selectedDate]);
+  }, [selectedDate, getNowScrollTime]);
 
   // Fetch events for current visible range and selected calendars
   const fetchEvents = useCallback(async (from, to, calIds) => {
@@ -85,14 +121,22 @@ export default function CalendarView({
   };
 
   const handleToday = () => {
-    const apiObj = calendarRef.current.getApi();
+    const apiObj = calendarRef.current?.getApi();
+    if (!apiObj) return;
     apiObj.today();
+    apiObj.scrollToTime(getNowScrollTime());
   };
 
   const handleViewChange = (viewName) => {
     setCurrentView(viewName);
-    const apiObj = calendarRef.current.getApi();
+    const apiObj = calendarRef.current?.getApi();
+    if (!apiObj) return;
     apiObj.changeView(viewName);
+    if (viewName !== 'dayGridMonth') {
+      setTimeout(() => {
+        apiObj.scrollToTime(getNowScrollTime());
+      }, 50);
+    }
   };
 
   // Convert backend events to FullCalendar event format
@@ -345,7 +389,8 @@ export default function CalendarView({
           allDaySlot={true}
           slotMinTime="00:00:00"
           slotMaxTime="24:00:00"
-          scrollTime="08:00:00"
+          scrollTime={initialScrollTime}
+          scrollTimeReset={false}
           nowIndicator={true}
           selectable={true}
           editable={true}
