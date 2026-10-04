@@ -82,7 +82,7 @@ public class CalendarController {
         calendarService.deleteCalendar(principal.getId(), id);
     }
 
-    @PatchMapping("/{id}/preference")
+    @PatchMapping(value = {"/{id}/preference", "/{id}/preferences"})
     @Operation(summary = "Update user visibility/color preference for this calendar")
     public ResponseEntity<CalendarResponse> updatePreference(
             @CurrentUser UserPrincipal principal,

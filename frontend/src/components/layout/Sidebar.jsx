@@ -141,10 +141,12 @@ export default function Sidebar({
                 key={cal.id}
                 className="group flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors"
               >
-                <label className="flex items-center gap-2.5 flex-1 min-w-0 cursor-pointer">
+                <div
+                  onClick={() => onToggleCalendar && onToggleCalendar(cal.id)}
+                  className="flex items-center gap-2.5 flex-1 min-w-0 cursor-pointer select-none"
+                >
                   <div
-                    onClick={() => onToggleCalendar && onToggleCalendar(cal.id)}
-                    className="w-4 h-4 rounded border flex items-center justify-center transition-colors"
+                    className="w-4 h-4 rounded border flex items-center justify-center transition-colors shrink-0"
                     style={{
                       backgroundColor: isChecked ? cal.color || '#4f46e5' : 'transparent',
                       borderColor: cal.color || '#4f46e5',
@@ -160,7 +162,7 @@ export default function Sidebar({
                       Default
                     </span>
                   )}
-                </label>
+                </div>
 
                 <button
                   onClick={() => onOpenShareCalendar && onOpenShareCalendar(cal)}
@@ -192,10 +194,12 @@ export default function Sidebar({
                   key={cal.id}
                   className="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors"
                 >
-                  <label className="flex items-center gap-2.5 flex-1 min-w-0 cursor-pointer">
+                  <div
+                    onClick={() => onToggleCalendar && onToggleCalendar(cal.id)}
+                    className="flex items-center gap-2.5 flex-1 min-w-0 cursor-pointer select-none"
+                  >
                     <div
-                      onClick={() => onToggleCalendar && onToggleCalendar(cal.id)}
-                      className="w-4 h-4 rounded border flex items-center justify-center transition-colors"
+                      className="w-4 h-4 rounded border flex items-center justify-center transition-colors shrink-0"
                       style={{
                         backgroundColor: isChecked ? cal.color || '#10b981' : 'transparent',
                         borderColor: cal.color || '#10b981',
@@ -209,7 +213,7 @@ export default function Sidebar({
                     <span className="px-1.5 py-0.2 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 text-[9px] rounded font-medium uppercase">
                       {cal.permission || 'VIEW'}
                     </span>
-                  </label>
+                  </div>
                 </div>
               );
             })}

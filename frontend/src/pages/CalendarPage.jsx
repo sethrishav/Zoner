@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import AppShell from '../components/layout/AppShell';
 import CalendarView from '../components/calendar/CalendarView';
 import EventModal from '../components/events/EventModal';
@@ -46,12 +46,13 @@ export default function CalendarPage() {
   const loadCalendars = useCallback(async () => {
     try {
       const data = await api.calendars.list();
+      console.info(
+        '[CALENDAR] Loaded calendars:',
+        data.map((c) => ({ id: c.id, name: c.name, enabled: c.enabled }))
+      );
       setCalendars(data);
-      // If none selected yet, default to all enabled calendars
-      setSelectedCalendarIds((prev) => {
-        if (prev.length > 0) return prev;
-        return data.filter((c) => c.enabled !== false).map((c) => c.id);
-      });
+      // Select strictly the calendars that are enabled in user preferences
+      setSelectedCalendarIds(data.filter((c) => c.enabled !== false).map((c) => c.id));
     } catch (err) {
       console.error('Failed to load calendars', err);
     }
@@ -73,10 +74,26 @@ export default function CalendarPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const handleToggleCalendar = (id) => {
+  const handleToggleCalendar = async (id) => {
+    const isCurrentlySelected = selectedCalendarIds.includes(id);
+    const nextEnabled = !isCurrentlySelected;
+
+    // 1. Optimistic UI update
     setSelectedCalendarIds((prev) =>
-      prev.includes(id) ? prev.filter((calId) => calId !== id) : [...prev, id]
+      isCurrentlySelected ? prev.filter((calId) => calId !== id) : [...prev, id]
     );
+    setCalendars((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, enabled: nextEnabled } : c))
+    );
+
+    // 2. Persist preference to backend user_calendar_prefs table
+    try {
+      console.info(`[CALENDAR] Updating preference for calendar ${id}: enabled=${nextEnabled}`);
+      await api.calendars.updatePreferences(id, { enabled: nextEnabled });
+      console.info(`[CALENDAR] Successfully saved preference for calendar ${id}`);
+    } catch (err) {
+      console.error(`Failed to persist calendar preference for ${id}:`, err);
+    }
   };
 
   // Triggered when slot is clicked or dragged

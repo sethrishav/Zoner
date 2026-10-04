@@ -18,12 +18,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CalendarService {
+
+    private static final Logger log = LoggerFactory.getLogger(CalendarService.class);
 
     private final CalendarRepository calendarRepository;
     private final CalendarShareRepository calendarShareRepository;
@@ -85,6 +89,10 @@ public class CalendarService {
             String color = (pref != null && pref.getColorOverride() != null) ? pref.getColorOverride() : c.getColor();
             results.add(CalendarResponse.of(c, s.getPermission(), enabled, color));
         }
+
+        log.info("[CALENDAR LIST] userId={}, returned {} calendars: {}",
+                userId, results.size(),
+                results.stream().map(r -> r.name() + "(id=" + r.id() + ",enabled=" + r.enabled() + ")").toList());
 
         return results;
     }
@@ -173,6 +181,8 @@ public class CalendarService {
 
         pref = userCalendarPrefRepository.save(pref);
         String color = pref.getColorOverride() != null ? pref.getColorOverride() : access.calendar().getColor();
+        log.info("[CALENDAR PREF UPDATED] userId={}, calendarId={}, enabled={}, colorOverride='{}'",
+                userId, calendarId, pref.isEnabled(), pref.getColorOverride());
 
         return CalendarResponse.of(access.calendar(), access.permission(), pref.isEnabled(), color);
     }

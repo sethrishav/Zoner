@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserCalendarPrefRepository extends JpaRepository<UserCalendarPref, Long> {
 
-    @Query("SELECT p FROM UserCalendarPref p WHERE p.user.id = :userId")
+    @Query("SELECT p FROM UserCalendarPref p JOIN FETCH p.calendar WHERE p.user.id = :userId")
     List<UserCalendarPref> findAllByUserId(Long userId);
 
     @Query("SELECT p FROM UserCalendarPref p WHERE p.user.id = :userId AND p.calendar.id = :calendarId")
