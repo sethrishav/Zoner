@@ -24,7 +24,6 @@ The database is pre-seeded with sample calendars, events, and recurrence rules:
 * **Primary Account (Reviewer):**
   * **Email:** `demo@zoner.app`
   * **Password:** `Password123!`
-  * *(Tip: Click the "Demo Reviewer" quick-fill button on the login screen to fill credentials instantly)*
 * **Collaborator Account:**
   * **Email:** `colleague@zoner.app`
   * **Password:** `Password123!`
