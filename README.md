@@ -2,6 +2,8 @@
 
 > **A time-zone intelligent calendar platform with recurrence, multi-calendar sharing, real-time conflict detection, and an embedded Model Context Protocol (MCP) server for AI assistants.**
 
+> 📖 **Deep Dive Technical Whitepaper:** For architectural design thinking, upfront planning & iterative changes, and a full engineering breakdown, read the **[Engineering Architecture & Design Document (ENGINEERING_README.md)](./ENGINEERING_README.md)**.
+
 [![Java 21](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.org/projects/jdk/21/)
 [![Spring Boot 3.5](https://img.shields.io/badge/Spring%20Boot-3.5-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![React 18](https://img.shields.io/badge/React-18-blue.svg)](https://react.dev/)
@@ -30,7 +32,6 @@ The cloud database is pre-seeded with sample calendars, events, and sharing rule
 * **Primary Demo Account (Reviewer):**
   * **Email:** `demo@zoner.app`
   * **Password:** `Password123!`
-  * *(Tip: Click the **"Demo Reviewer"** button on the login screen to auto-fill credentials instantly)*
 * **Collaborator Account:**
   * **Email:** `colleague@zoner.app`
   * **Password:** `Password123!`

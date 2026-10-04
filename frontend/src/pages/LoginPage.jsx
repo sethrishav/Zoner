@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getErrorMessage } from '../api/errors';
-import { Calendar, Lock, Mail, ArrowRight, Sparkles, AlertCircle } from 'lucide-react';
+import { Calendar, Lock, Mail, ArrowRight, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -32,12 +32,6 @@ export default function LoginPage() {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const fillDemoAccount = () => {
-    setEmail('demo@zoner.app');
-    setPassword('Password123!');
-    setError('');
   };
 
   return (
@@ -132,27 +126,6 @@ export default function LoginPage() {
             </div>
           </form>
 
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-slate-400 font-medium">Quick Reviewer Access</span>
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <button
-                type="button"
-                onClick={fillDemoAccount}
-                className="w-full inline-flex justify-center items-center gap-2 py-2 px-4 border border-slate-200 rounded-lg shadow-sm bg-slate-50 text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-brand-600" />
-                Fill Demo Credentials (demo@zoner.app)
-              </button>
-            </div>
-          </div>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-slate-500">
