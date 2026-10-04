@@ -141,10 +141,13 @@ export default function CalendarPage() {
 
   const executeDelete = async (eventId, mode, occStart) => {
     try {
+      console.info(`[EVENT] Deleting event ID=${eventId} mode=${mode || 'ALL'}`);
       await api.events.delete(eventId, mode, occStart);
+      console.info(`[EVENT] Successfully deleted event ID=${eventId}`);
       toast.success('Event deleted');
       setRefreshTrigger((prev) => prev + 1);
     } catch (err) {
+      console.error(`[EVENT] Failed to delete event ID=${eventId}:`, err);
       toast.error(getErrorMessage(err));
     }
   };

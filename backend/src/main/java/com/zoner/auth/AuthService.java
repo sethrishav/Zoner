@@ -15,6 +15,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Locale;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     public static final Duration REFRESH_TOKEN_VALIDITY = Duration.ofDays(7);
 
@@ -52,8 +56,10 @@ public class AuthService {
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         String normalizedEmail = normalizeEmail(request.email());
+        log.info("[AUTH REGISTER ATTEMPT] email='{}', timeZone='{}'", normalizedEmail, request.timeZone());
 
         if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
+            log.warn("[AUTH REGISTER REJECTED] Email already exists: '{}'", normalizedEmail);
             throw new ConflictException("An account with that email address already exists.");
         }
 
@@ -66,6 +72,9 @@ public class AuthService {
                 validTimeZone);
         user = userRepository.save(user);
 
+        log.info("[AUTH REGISTER SUCCESS] New user registered: userId={}, email='{}', displayName='{}', timeZone='{}'",
+                user.getId(), user.getEmail(), user.getDisplayName(), user.getTimeZone());
+
         // Notify domain listeners (e.g. provision default calendars in M2)
         eventPublisher.publishEvent(new UserRegisteredEvent(user));
 
@@ -75,14 +84,20 @@ public class AuthService {
     @Transactional
     public AuthResponse login(LoginRequest request) {
         String normalizedEmail = normalizeEmail(request.email());
+        log.info("[AUTH LOGIN ATTEMPT] email='{}'", normalizedEmail);
 
         User user = userRepository.findByEmailIgnoreCase(normalizedEmail)
-                .orElseThrow(() -> new UnauthenticatedException("Invalid email or password."));
+                .orElseThrow(() -> {
+                    log.warn("[AUTH LOGIN FAILED] User not found for email: '{}'", normalizedEmail);
+                    return new UnauthenticatedException("Invalid email or password.");
+                });
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            log.warn("[AUTH LOGIN FAILED] Password mismatch for email: '{}'", normalizedEmail);
             throw new UnauthenticatedException("Invalid email or password.");
         }
 
+        log.info("[AUTH LOGIN SUCCESS] User logged in: userId={}, email='{}'", user.getId(), user.getEmail());
         return issueTokens(user);
     }
 
@@ -114,6 +129,7 @@ public class AuthService {
         if (rawRefreshToken != null && !rawRefreshToken.isBlank()) {
             String hash = JwtService.sha256Hex(rawRefreshToken);
             refreshTokenRepository.findByTokenHashWithUser(hash).ifPresent(rt -> {
+                log.info("[AUTH LOGOUT] Revoked session for userId={}", rt.getUser().getId());
                 rt.revoke(clock.instant());
                 refreshTokenRepository.save(rt);
             });

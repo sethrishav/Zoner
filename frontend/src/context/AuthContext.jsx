@@ -56,21 +56,36 @@ export function AuthProvider({ children }) {
   }, [initAuth]);
 
   const login = async (email, password) => {
-    const data = await api.auth.login({ email, password });
-    tokenStorage.setTokens(data.accessToken, data.refreshToken);
-    setUser(data.user);
-    return data.user;
+    console.info(`[AUTH] Login attempt for email: ${email}`);
+    try {
+      const data = await api.auth.login({ email, password });
+      tokenStorage.setTokens(data.accessToken, data.refreshToken);
+      setUser(data.user);
+      console.info(`[AUTH] Login successful for user: ${data.user?.email} (ID: ${data.user?.id})`);
+      return data.user;
+    } catch (err) {
+      console.warn(`[AUTH] Login failed for email ${email}:`, err?.message || err);
+      throw err;
+    }
   };
 
   const register = async (email, password, displayName, timeZone) => {
     const tz = timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-    const data = await api.auth.register({ email, password, displayName, timeZone: tz });
-    tokenStorage.setTokens(data.accessToken, data.refreshToken);
-    setUser(data.user);
-    return data.user;
+    console.info(`[AUTH] Registration attempt for email: ${email}, timezone: ${tz}`);
+    try {
+      const data = await api.auth.register({ email, password, displayName, timeZone: tz });
+      tokenStorage.setTokens(data.accessToken, data.refreshToken);
+      setUser(data.user);
+      console.info(`[AUTH] Registration successful for user: ${data.user?.email} (ID: ${data.user?.id})`);
+      return data.user;
+    } catch (err) {
+      console.warn(`[AUTH] Registration failed for email ${email}:`, err?.message || err);
+      throw err;
+    }
   };
 
   const logout = async () => {
+    console.info(`[AUTH] Logging out user: ${user?.email || 'unknown'}`);
     const refreshToken = tokenStorage.getRefreshToken();
     if (refreshToken) {
       try {

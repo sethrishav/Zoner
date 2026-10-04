@@ -295,16 +295,21 @@ export default function EventModal({
       setError('');
 
       if (isEditing) {
+        console.info(`[EVENT] Updating event ID=${event.id} mode=${editMode || 'ALL'} title="${payload.title}"`);
         await api.events.update(event.id, payload, editMode, occurrenceStart);
         toast.success('Event updated successfully');
+        console.info(`[EVENT] Successfully updated event ID=${event.id}`);
       } else {
-        await api.events.create(payload);
+        console.info(`[EVENT] Creating new event title="${payload.title}" start=${payload.startAt}`);
+        const created = await api.events.create(payload);
         toast.success('Event created successfully');
+        console.info(`[EVENT] Successfully created event ID=${created?.id || 'new'}`);
       }
 
       onSaved && onSaved();
       onClose();
     } catch (err) {
+      console.error('[EVENT] Save failed:', err);
       setError(getErrorMessage(err));
     } finally {
       setIsSubmitting(false);

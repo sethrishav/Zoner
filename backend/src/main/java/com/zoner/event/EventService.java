@@ -305,6 +305,7 @@ public class EventService {
                         .orElseGet(() -> new EventException(event, originalStart, ExceptionType.CANCELLED));
                 ex.setExceptionType(ExceptionType.CANCELLED);
                 eventExceptionRepository.save(ex);
+                log.info("[EVENT OCCURRENCE CANCELLED] eventId={}, userId={}, originalStart={}", eventId, userId, originalStart);
                 return;
             }
 
@@ -314,12 +315,14 @@ public class EventService {
                 }
                 event.setRecurrenceUntil(originalStart.minusMillis(1));
                 eventRepository.save(event);
+                log.info("[EVENT SERIES TRUNCATED] eventId={}, userId={}, until={}", eventId, userId, originalStart.minusMillis(1));
                 return;
             }
         }
 
         // Mode ALL: deletes master event and cascades to exceptions
         eventRepository.delete(event);
+        log.info("[EVENT DELETED] eventId={}, userId={}, title='{}', editMode={}", event.getId(), userId, event.getTitle(), editMode);
     }
 
     @Transactional(readOnly = true)
