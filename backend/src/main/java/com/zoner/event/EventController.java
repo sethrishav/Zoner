@@ -6,6 +6,7 @@ import com.zoner.event.EventDto.AvailabilityRequest;
 import com.zoner.event.EventDto.AvailabilityResponse;
 import com.zoner.event.EventDto.CreateEventRequest;
 import com.zoner.event.EventDto.EventResponse;
+import com.zoner.event.EventDto.RecurrenceEditMode;
 import com.zoner.event.EventDto.UpdateEventRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

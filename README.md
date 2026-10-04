@@ -252,7 +252,77 @@ erDiagram
 
 ---
 
-## 5. Model Context Protocol (MCP) Integration
+## 5. Bonus Features & Advanced Capabilities
+
+Beyond the baseline calendaring requirements, Zoner implements a comprehensive suite of advanced and bonus capabilities from the optional project specification:
+
+### Bonus Features Implementation Matrix
+
+| Bonus Feature | Status | Description & Engineering Approach |
+|---|:---:|---|
+| **Drag-and-Drop Scheduling** | ✅ **Implemented** | Interactive event repositioning and edge-drag duration resizing across Day and Week views with optimistic visual updates and automatic rollback. |
+| **Conflict Visualization** | ✅ **Implemented** | Real-time interval overlap calculation (`startA < endB AND endA > startB`) across all active calendars, featuring an inline amber warning banner in the event modal and the `check_availability` endpoint. |
+| **Natural-Language Event Creation** | ✅ **Implemented (via MCP)** | Full conversational parsing via connected AI assistants (Claude, Cursor, Claude Code) leveraging the embedded Model Context Protocol server. |
+| **Attendees and RSVP** | ✅ **Implemented** | First-class guest management backed by the `event_attendees` table with composite unique constraints, status tracking (`PENDING`, `ACCEPTED`, `TENTATIVE`, `DECLINED`), and color-coded UI badges. |
+| **Email Notifications** | ✅ **Implemented** | Pluggable `EmailNotificationChannel` integrated into `NotificationChannelRegistry` alongside in-app alerts, complete with fallback persistence and reminder dispatcher execution. |
+| **Dark Mode** | ✅ **Implemented** | Full-app Dark Mode powered by Tailwind CSS and `ThemeContext`, featuring system OS detection, manual toggle in the navigation bar, and `localStorage` persistence. |
+| **Keyboard Shortcuts** | ✅ **Implemented** | Universal `⌘K` / `Ctrl+K` shortcut to instantly trigger the debounced full-text search palette across titles, descriptions, and locations. |
+| **Audit History / Activity Log** | ✅ **Implemented** | Persistent audit records in `reminder_dispatches` (tracking exact fire timestamps and preventing duplicate sends), PAT security audit timestamps (`last_used_at`), and structured correlation logs. |
+| **Optimistic UI** | ✅ **Implemented** | Zero-latency UI updates when moving/resizing events and toggling calendar preferences before backend API roundtrips finish, with graceful rollback on errors. |
+| **AI Event Summaries** | ✅ **Implemented (via MCP)** | AI agents can inspect schedules via `list_events`, `get_event`, and `search_events` to deliver high-level executive summaries of daily or weekly commitments. |
+| **AI "Find a Time"** | ✅ **Implemented (via MCP)** | AI assistants query free/busy windows using the `check_availability` MCP tool to propose conflict-free meeting slots. |
+| *Import / Export .ics* | ⏳ *Roadmap* | Standard RFC 5545 `.ics` file ingestion and download is queued for future milestones. |
+| *Google Calendar Import* | ⏳ *Roadmap* | Third-party OAuth sync is planned for future cloud integrations. |
+| *Public Calendar Links* | ⏳ *Roadmap* | Enforces authenticated role-based sharing (`VIEW` / `EDIT`) with anti-enumeration protection to preserve strict privacy guarantees. |
+| *Agenda View* | ⏳ *Roadmap* | Interactive Month, Week, and Day views are fully supported; a dedicated linear agenda list view is queued. |
+| *Offline / PWA Support* | ⏳ *Roadmap* | Service Worker offline caching is planned for upcoming releases. |
+
+### Feature Deep-Dive
+
+#### 1. Drag-and-Drop Scheduling & Duration Resizing
+* Built on FullCalendar's interaction plugin (`handleEventDrop` and `handleEventResize` in [`CalendarView.jsx`](file:///Users/rishavsair/Documents/rishavproj/Zoner/frontend/src/components/calendar/CalendarView.jsx#L138-L203)).
+* Drag any non-recurring event in Week or Day view to reschedule it instantly.
+* Grab the top or bottom border of an event to resize its start or end duration.
+* If moving a recurring event or encountering a backend collision, the change reverts automatically (`dropInfo.revert()`) and prompts the user with actionable feedback.
+
+#### 2. Conflict Visualization & Live Availability
+* Powered by `AvailabilityService` on the backend and a debounced watcher in [`EventModal.jsx`](file:///Users/rishavsair/Documents/rishavproj/Zoner/frontend/src/components/events/EventModal.jsx#L190-L222).
+* As users modify start/end times or event dates, Zoner tests mathematical interval intersections ($start_A < end_B \land end_A > start_B$) against all visible calendars.
+* Displays a real-time amber warning banner detailing overlapping meetings before changes are committed.
+
+#### 3. Attendees & RSVP Management
+* Relational schema backed by Flyway migrations (`event_attendees` table with composite unique constraint `UNIQUE (event_id, email)`).
+* Supports invitee email entry, duplicate prevention, and distinct RSVP statuses (`PENDING`, `ACCEPTED`, `TENTATIVE`, `DECLINED`).
+* Visual indicators and color-coded status badges in both [`EventModal.jsx`](file:///Users/rishavsair/Documents/rishavproj/Zoner/frontend/src/components/events/EventModal.jsx#L532-L619) and [`EventDetailModal.jsx`](file:///Users/rishavsair/Documents/rishavproj/Zoner/frontend/src/components/events/EventDetailModal.jsx#L113-L144).
+
+#### 4. Dark Mode Support
+* Integrated `ThemeContext` ([`ThemeContext.jsx`](file:///Users/rishavsair/Documents/rishavproj/Zoner/frontend/src/context/ThemeContext.jsx)) automatically respects user system preferences (`prefers-color-scheme: dark`) and persists overrides in `localStorage`.
+* Handcrafted dark color palette utilizing Tailwind CSS `dark:` utilities across all views, modal backdrops, dropdowns, and form inputs.
+
+#### 5. Keyboard Shortcuts
+* Global keyboard listener ([`CalendarPage.jsx`](file:///Users/rishavsair/Documents/rishavproj/Zoner/frontend/src/pages/CalendarPage.jsx#L65-L75)) captures `⌘K` (macOS) and `Ctrl+K` (Windows/Linux).
+* Instantly launches the debounced global search palette ([`SearchModal.jsx`](file:///Users/rishavsair/Documents/rishavproj/Zoner/frontend/src/components/search/SearchModal.jsx)) with keyboard navigation.
+
+#### 6. Optimistic UI Updates
+* Event drag-and-drop and resize actions render immediately on the UI canvas while issuing background asynchronous `PUT /api/events/:id` requests.
+* Calendar visibility checkboxes in the sidebar toggle visible layers instantaneously with optimistic local state while persisting preferences asynchronously via `PUT /api/calendars/:id/preferences`.
+
+#### 7. Audit History & Activity Logs
+* **Reminder Dispatch Locks:** The `reminder_dispatches` table acts as a tamper-proof system audit log recording every successful alert delivery timestamp.
+* **Token Security Audits:** Personal Access Tokens log their `last_used_at` timestamp on every MCP request.
+* **Structured Observability:** Centralized logging across authentication, event lifecycle, and recurrence exception resolutions with MDC correlation IDs.
+
+#### 8. Conversational AI Integration (MCP Tools)
+* Exposes dedicated Model Context Protocol tools (`create_event`, `list_events`, `check_availability`, `search_events`).
+* External AI assistants (Claude, Cursor, Claude Code) interpret natural language prompts (e.g., *"Schedule team sync tomorrow at 3pm"*, *"Summarize my meetings for this week"*, *"Find a 45-minute open slot on Thursday"*) and invoke Zoner's tools directly.
+
+#### 9. Pluggable Email Notification Architecture
+* Backed by `EmailNotificationChannel` implemented alongside `InAppNotificationChannel` within `NotificationChannelRegistry`.
+* Provides structured logging of email dispatches and automatic in-app inbox fallback persistence so reminders are never lost.
+
+---
+
+## 6. Model Context Protocol (MCP) Integration
 
 Zoner exposes a fully compliant **Model Context Protocol (MCP)** server (spec `2024-11-05`), turning AI assistants into intelligent calendar agents.
 
@@ -296,7 +366,7 @@ In Cursor Settings $\rightarrow$ **Features** $\rightarrow$ **MCP** $\rightarrow
 
 ---
 
-## 6. Local Development Setup
+## 7. Local Development Setup
 
 ### Prerequisites
 * **Java Development Kit (JDK):** Version 21 LTS
@@ -357,7 +427,7 @@ npm run build
 
 ---
 
-## 7. Configuration & Environment Variables
+## 8. Configuration & Environment Variables
 
 | Variable | Target | Purpose | Example |
 |---|---|---|---|
@@ -372,7 +442,7 @@ npm run build
 
 ---
 
-## 8. Documentation Index
+## 9. Documentation Index
 
 Detailed architectural and procedural documents are maintained in the repository:
 
@@ -391,7 +461,7 @@ Detailed architectural and procedural documents are maintained in the repository
 
 ---
 
-## 9. Known Limitations & Production Scope
+## 10. Known Limitations & Production Scope
 
 In the spirit of honest senior engineering, the following intentional trade-offs are documented:
 
