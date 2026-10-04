@@ -215,13 +215,26 @@ export const api = {
     create: (event) => apiRequest('/events', { method: 'POST', body: JSON.stringify(event) }),
     get: (id) => apiRequest(`/events/${id}`),
     update: (id, event, editMode = 'ALL', occurrenceStart = null) => {
-      const params = new URLSearchParams({ editMode });
-      if (occurrenceStart) params.append('occurrenceStart', occurrenceStart);
-      return apiRequest(`/events/${id}?${params.toString()}`, { method: 'PUT', body: JSON.stringify(event) });
+      const mode = editMode || event?.editMode || 'ALL';
+      const origStart = occurrenceStart || event?.originalStart;
+      const params = new URLSearchParams({ editMode: mode });
+      if (origStart) {
+        params.append('originalStart', origStart);
+        params.append('occurrenceStart', origStart);
+      }
+      const bodyPayload = {
+        ...event,
+        editMode: mode,
+        originalStart: origStart,
+      };
+      return apiRequest(`/events/${id}?${params.toString()}`, { method: 'PUT', body: JSON.stringify(bodyPayload) });
     },
     delete: (id, editMode = 'ALL', occurrenceStart = null) => {
-      const params = new URLSearchParams({ editMode });
-      if (occurrenceStart) params.append('occurrenceStart', occurrenceStart);
+      const params = new URLSearchParams({ editMode: editMode || 'ALL' });
+      if (occurrenceStart) {
+        params.append('originalStart', occurrenceStart);
+        params.append('occurrenceStart', occurrenceStart);
+      }
       return apiRequest(`/events/${id}?${params.toString()}`, { method: 'DELETE' });
     },
     search: (query, from, to) => {

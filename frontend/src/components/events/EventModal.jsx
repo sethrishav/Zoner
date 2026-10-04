@@ -268,6 +268,10 @@ export default function EventModal({
     else if (recurrenceFreq === 'MONTHLY') rrule = 'FREQ=MONTHLY';
 
     const untilInstant = recurrenceUntil ? `${recurrenceUntil}T23:59:59Z` : null;
+    const effectiveOrigStart = event?.originalStart || occurrenceStart;
+    const origStartIso = effectiveOrigStart
+      ? (effectiveOrigStart instanceof Date ? effectiveOrigStart.toISOString() : new Date(effectiveOrigStart).toISOString())
+      : null;
 
     const payload = {
       calendarId: Number(calendarId),
@@ -281,6 +285,8 @@ export default function EventModal({
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
       recurrenceRule: rrule,
       recurrenceUntil: untilInstant,
+      editMode: isEditing ? (editMode || 'ALL') : null,
+      originalStart: isEditing ? origStartIso : null,
       version: event?.version,
       reminders: reminders.filter((r) => r.minutesBefore >= 0),
       attendees: attendees.map((a) => ({
@@ -295,8 +301,8 @@ export default function EventModal({
       setError('');
 
       if (isEditing) {
-        console.info(`[EVENT] Updating event ID=${event.id} mode=${editMode || 'ALL'} title="${payload.title}"`);
-        await api.events.update(event.id, payload, editMode, occurrenceStart);
+        console.info(`[EVENT] Updating event ID=${event.id} mode=${editMode || 'ALL'} title="${payload.title}" origStart=${origStartIso}`);
+        await api.events.update(event.id, payload, editMode, origStartIso);
         toast.success('Event updated successfully');
         console.info(`[EVENT] Successfully updated event ID=${event.id}`);
       } else {

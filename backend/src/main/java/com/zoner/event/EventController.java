@@ -63,8 +63,22 @@ public class EventController {
     public ResponseEntity<EventResponse> updateEvent(
             @CurrentUser UserPrincipal principal,
             @PathVariable Long id,
+            @RequestParam(required = false) RecurrenceEditMode editMode,
+            @RequestParam(required = false) Instant originalStart,
+            @RequestParam(required = false) Instant occurrenceStart,
             @Valid @RequestBody UpdateEventRequest request) {
-        EventResponse response = eventService.updateEvent(principal.getId(), id, request);
+        RecurrenceEditMode effectiveMode = request.editMode() != null ? request.editMode() : editMode;
+        Instant effectiveOrigStart = request.originalStart() != null ? request.originalStart()
+                : (originalStart != null ? originalStart : occurrenceStart);
+
+        UpdateEventRequest effectiveRequest = (effectiveMode != request.editMode() || effectiveOrigStart != request.originalStart())
+                ? new UpdateEventRequest(
+                        request.calendarId(), request.title(), request.description(), request.location(), request.color(),
+                        request.allDay(), request.startAt(), request.endAt(), request.timeZone(), request.recurrenceRule(),
+                        effectiveMode, effectiveOrigStart, request.version(), request.reminders(), request.attendees())
+                : request;
+
+        EventResponse response = eventService.updateEvent(principal.getId(), id, effectiveRequest);
         return ResponseEntity.ok(response);
     }
 

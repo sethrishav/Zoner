@@ -144,7 +144,7 @@ export default function CalendarPage() {
     const eventData = pendingRecurringEvent;
     if (!eventData) return;
 
-    const occStart = eventData.start || eventData.startAt;
+    const occStart = eventData.originalStart || eventData.startAt || eventData.start;
 
     if (recurringActionType === 'delete') {
       executeDelete(eventData.id, mode, occStart);

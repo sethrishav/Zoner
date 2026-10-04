@@ -162,6 +162,8 @@ public class EventService {
             ex.setOverrideAllDay(Boolean.TRUE.equals(request.allDay()));
 
             ex = eventExceptionRepository.save(ex);
+            log.info("[EVENT EXCEPTION SAVED] eventId={}, originalStart={}, exceptionId={}, title='{}', type={}",
+                    eventId, request.originalStart(), ex.getId(), ex.getOverrideTitle(), ex.getExceptionType());
             return EventResponse.fromOccurrence(event, request.originalStart(), ex);
         }
 
@@ -204,6 +206,19 @@ public class EventService {
             );
             newSeries.setRecurrenceRule(rule);
             newSeries.setRecurrenceUntil(recurrenceExpander.parseUntil(rule, timeZone));
+
+            if (request.reminders() != null) {
+                for (ReminderDto r : request.reminders()) {
+                    newSeries.addReminder(r.minutesBefore(), r.channel());
+                }
+            }
+            if (request.attendees() != null) {
+                for (EventDto.AttendeeDto a : request.attendees()) {
+                    if (a.email() != null && !a.email().isBlank()) {
+                        newSeries.addAttendee(a.email(), a.displayName(), a.status());
+                    }
+                }
+            }
 
             Event savedNewSeries = eventRepository.save(newSeries);
             return EventResponse.from(savedNewSeries);
@@ -261,6 +276,7 @@ public class EventService {
 
         if (request.attendees() != null) {
             event.clearAttendees();
+            eventRepository.saveAndFlush(event); // Ensure orphan deletion is flushed before re-inserting
             for (EventDto.AttendeeDto a : request.attendees()) {
                 if (a.email() != null && !a.email().isBlank()) {
                     event.addAttendee(a.email(), a.displayName(), a.status());
